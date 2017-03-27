@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block body %}
+<textarea id="terminal" cols="80" rows="100"></textarea>
+<script type="text/javascript">
+$(document).ready(function() {
+    const socket = new WebSocket('ws://localhost:4444/read-build-log?secret={{secret}}');
+    var terminal = $('#terminal');
+    socket.addEventListener('message', function (event) {
+        terminal.append(event.data);
+    });
+});
+</script>
+{% endblock %}
