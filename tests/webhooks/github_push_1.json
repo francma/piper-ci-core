@@ -1,0 +1,12 @@
+{
+    "commits": [
+        {
+            "id": "d9346cf45f551bce7f02c810e44fbc9776734baf",
+            "message": "Updated docs"
+        }
+    ],
+    "ref": "refs/heads/master",
+    "repository": {
+        "clone_url": "https://github.com/francma/piper-ci-test-repo.git"
+    }
+}

@@ -1,0 +1,28 @@
+stages:
+  - one
+  - two
+  - three
+
+jobs:
+  first:
+    stage: one
+    runner: RUNNER
+    image: IMAGE
+    on: branch == master
+    env:
+      a: branch
+      c: c
+    commands:
+      - echo hej
+      - echo hej
+  second:
+    stage: one
+    runner: RUNNER
+    image: IMAGE
+    env:
+      a: branch
+      c: c
+    on: branch == master
+    commands:
+      - hej
+      - hej

@@ -1,0 +1,14 @@
+dist: trusty
+language: python
+cahce: pip
+services:
+  - redis-server
+
+python:
+  - "3.5"
+  - "3.5-dev"
+  - "3.6"
+  - "3.6-dev"
+
+script:
+  - python setup.py test

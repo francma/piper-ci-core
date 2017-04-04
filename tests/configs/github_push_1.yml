@@ -1,0 +1,27 @@
+stages:
+  - one
+  - two
+
+jobs:
+  first:
+    stage: one
+    runner: RUNNER
+    image: IMAGE
+    only: "$PIPER_BRANCH == master"
+    env:
+      a: branch
+      c: c
+    commands:
+      - echo hej
+      - echo hej
+  second:
+    stage: two
+    runner: RUNNER
+    image: IMAGE
+    env:
+      a: branch
+      c: c
+    only: "$PIPER_BRANCH == master"
+    commands:
+      - hej
+      - hej
