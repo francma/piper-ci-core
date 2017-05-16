@@ -18,6 +18,5 @@ def test_basic(connection):
     build.project = project
     build.ref = 'TEST'
     build.commit = '634721d9da222050d41dce164d9de35fe475aa7a'
-    build.status = BuildStatus.NEW
     load_config(build, contents)
 

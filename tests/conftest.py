@@ -5,7 +5,7 @@ from peewee import SqliteDatabase
 from redis import Redis
 
 from piper_driver.addins.common import Common
-from piper_driver.addins.queue import queue_proxy, Queue
+from piper_driver.addins.queue import Queue
 from piper_driver.models import database_proxy
 from piper_driver.models import models
 
@@ -22,8 +22,8 @@ def connection():
 @pytest.fixture()
 def redis():
     Common.REDIS_PREFIX = 'piper:test:' + uuid.uuid4().hex
-    conn = queue_proxy.connection = Redis()
+    conn = Queue.connection = Redis()
 
     yield conn
-    # for key in conn.keys(Common.REDIS_PREFIX + '*'):
-    #     conn.delete(key)
+    for key in conn.keys(Common.REDIS_PREFIX + '*'):
+        conn.delete(key)

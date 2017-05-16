@@ -13,38 +13,54 @@ def test_job_evaluate_condition(connection):
     stage = Stage.create(name='first', order=1, build=build)
 
     only = 'BOOL_VAR'
-    job = Job.create(stage=stage, status=JobStatus.NEW, image='IMAGE', only=only)
+    job = Job.create(stage=stage, image='IMAGE', only=only)
     Environment.create(name='BOOL_VAR', value=True, job=job)
     assert job_evaluate_condition(job) is True
 
     only = 'STR_VAR == "string"'
-    job = Job.create(stage=stage, status=JobStatus.NEW, image='IMAGE', only=only)
+    job = Job.create(stage=stage, image='IMAGE', only=only)
     Environment.create(name='STR_VAR', value='string', job=job)
     assert job_evaluate_condition(job) is True
 
     only = 'INT_VAR % 2 == 0'
-    job = Job.create(stage=stage, status=JobStatus.NEW, image='IMAGE', only=only)
+    job = Job.create(stage=stage, image='IMAGE', only=only)
     Environment.create(name='INT_VAR', value=22, job=job)
     assert job_evaluate_condition(job) is True
 
     only = 'INT_VAR %%%%% 2 == 0'
-    job = Job.create(stage=stage, status=JobStatus.NEW, image='IMAGE', only=only)
+    job = Job.create(stage=stage, image='IMAGE', only=only)
     Environment.create(name='INT_VAR', value=22, job=job)
     with pytest.raises(JobOnlyExpressionException):
         job_evaluate_condition(job)
 
 
 def test_model(connection):
+    project = Project.create(url='https://A', origin='https://github.com/francma/piper-ci-test-repo.git')
+    build = Build.create(project=project, ref='a', commit='634721d9da222050d41dce164d9de35fe475aa7a')
+    stage = Stage.create(name='first', order=1, build=build)
+
     job = Job()
-    with pytest.raises(ModelInvalidValueException):
-        job.image = 1
-    with pytest.raises(ModelInvalidValueException):
-        job.only = 1
-    with pytest.raises(ModelInvalidValueException):
-        job.status = 1
+    job.stage = stage
+    job.image = 1
+    job.only = 1
+    job.status = 1
+    with pytest.raises(ModelInvalid) as e:
+        job.save()
+    expected = set([
+        JobError.IMAGE_INVALID_TYPE,
+        JobError.ONLY_INVALID_TYPE,
+        JobError.STATUS_INVALID_TYPE,
+    ])
+    assert e.value.errors == expected
+    errors = set()
+    job.validate(errors)
+    assert errors == expected
+
     job.image = 'image'
     job.only = '1 == 1'
-    job.status = JobStatus.NEW
+    job.status = JobStatus.CREATED
+    assert job.validate()
+    job.save()
 
 
 def test_queue(connection, redis):
@@ -73,7 +89,7 @@ def test_queue(connection, redis):
     assert job_queue_pop(runner2) is None
 
     build = Build.create(project=project2, ref='a', commit='634721d9da222050d41dce164d9de35fe475aa7a')
-    stage = Stage.create(name='first', order=1, build=build, status=StageStatus.NEW)
+    stage = Stage.create(name='first', order=1, build=build)
     job = Job.create(stage=stage, image='IMAGE', group=group2)
     job_queue_push(job)
 

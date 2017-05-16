@@ -2,23 +2,21 @@ from piper_driver.addins.queue import Queue
 
 
 def test_first(redis):
-    queue1 = Queue('test')
-    queue2 = Queue('test2')
-    queue1.push('1')
-    queue2.push('1')
-    queue1.push('2')
-    queue2.push('2')
-    queue1.push('3')
-    queue2.push('3')
-    queue1.push('4')
-    queue2.push('4')
-    assert queue1.pop() == '1'
-    assert queue1.pop() == '2'
-    assert queue1.pop() == '3'
-    assert queue1.pop() == '4'
-    assert queue1.pop() is None
-    assert queue2.pop() == '1'
-    assert queue2.pop() == '2'
-    assert queue2.pop() == '3'
-    assert queue2.pop() == '4'
-    assert queue2.pop() is None
+    Queue.push('q1', '1')
+    Queue.push('q2', '1')
+    Queue.push('q1', '2')
+    Queue.push('q2', '2')
+    Queue.push('q1', '3')
+    Queue.push('q2', '3')
+    Queue.push('q1', '4')
+    Queue.push('q2', '4')
+    assert Queue.pop('q1') == '1'
+    assert Queue.pop('q1') == '2'
+    assert Queue.pop('q1') == '3'
+    assert Queue.pop('q1') == '4'
+    assert Queue.pop('q1') is None
+    assert Queue.pop('q2') == '1'
+    assert Queue.pop('q2') == '2'
+    assert Queue.pop('q2') == '3'
+    assert Queue.pop('q2') == '4'
+    assert Queue.pop('q2') is None

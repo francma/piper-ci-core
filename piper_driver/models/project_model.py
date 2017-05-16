@@ -10,7 +10,7 @@ from piper_driver.models.user_model import User
 
 
 class ProjectRole(Enum):
-    OWNER = 1
+    MASTER = 1
     DEVELOPER = 2
     GUEST = 3
 

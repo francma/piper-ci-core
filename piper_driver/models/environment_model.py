@@ -24,7 +24,7 @@ class Environment(BaseModel):
     @value.setter
     def value(self, value: Union[int, str, bool]):
         if type(value) not in [int, str, bool]:
-            raise ModelInvalidValueException('Type {} is not supported'.format(type(value)))
+            raise ModelInvalid('Type {} is not supported'.format(type(value)))
         self._value = pickle.dumps(value)
 
     @property
@@ -34,5 +34,5 @@ class Environment(BaseModel):
     @name.setter
     def name(self, value: str) -> None:
         if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', value) or len(value) > 255:
-            raise ModelInvalidValueException('Invalid name for environment variable.')
+            raise ModelInvalid('Invalid name for environment variable.')
         self._name = value

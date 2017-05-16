@@ -2,29 +2,18 @@ from typing import Optional
 from piper_driver.addins.common import Common
 
 
-class ConnectionProxy:
-    connection = None
-
-
-queue_proxy = ConnectionProxy()
-
-
 class Queue:
 
-    def __init__(self, name: str):
-        self.connection = queue_proxy.connection
-        self._name = name
+    connection = None
 
-    def pop(self) -> Optional[str]:
-        value = self.connection.lpop(Common.REDIS_PREFIX + ':queue:' + self.name)
+    @staticmethod
+    def pop(queue: str) -> Optional[str]:
+        value = Queue.connection.lpop(Common.REDIS_PREFIX + ':queue:' + queue)
         if value is None:
             return None
 
         return value.decode()
 
-    def push(self, item: str) -> None:
-        self.connection.rpush(Common.REDIS_PREFIX + ':queue:' + self.name, item)
-
-    @property
-    def name(self):
-        return self._name
+    @staticmethod
+    def push(queue: str, item: str) -> None:
+        Queue.connection.rpush(Common.REDIS_PREFIX + ':queue:' + queue, item)

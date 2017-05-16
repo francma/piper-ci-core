@@ -15,7 +15,7 @@ from piper_driver.models.runner_model import Runner, ProjectRunner
 from piper_driver.models.runner_group_model import RunnerGroup
 from piper_driver.models.build_model import Build, BuildStatus
 from piper_driver.models.stage_model import Stage, StageStatus
-from piper_driver.models.job_model import Job, JobStatus
+from piper_driver.models.job_model import Job, JobStatus, JobError
 from piper_driver.models.command_model import Command
 from piper_driver.models.environment_model import Environment
 
@@ -49,7 +49,6 @@ def load_config(build: Build, yml: str) -> None:
         stage.name = s
         stage.order = idx
         stage.build = build
-        stage.status = BuildStatus.NEW
         stages[s] = stage
 
     if 'jobs' not in d:
@@ -72,7 +71,6 @@ def load_config(build: Build, yml: str) -> None:
 
         job = Job()
         job.stage = stages[job_def['stage']]
-        job.status = JobStatus.NEW
         jobs.append(job)
 
         if 'only' in job_def:
@@ -210,9 +208,8 @@ def job_queue_pop(runner: Runner) -> Optional[Job]:
     item = None
     for project in projects:
         for group in groups:
-            queue = Queue('{}:{}'.format(project.id, group.name))
-            item = queue.pop()
-            print(item)
+            queue = '{}:{}'.format(project.id, group.name)
+            item = Queue.pop(queue)
             if item is not None:
                 break
         else:
@@ -234,6 +231,90 @@ def job_queue_push(job: Job) -> None:
     If job has no group, it will be assigned to RunnerGroup.NONE_GROUP
     """
     group = job.group if job.group else RunnerGroup.NONE_GROUP
-    queue = Queue('{}:{}'.format(job.stage.build.project.id, group.name))
-    queue.push(str(job.id))
+    queue = '{}:{}'.format(job.stage.build.project.id, group.name)
+    Queue.push(queue, str(job.id))
+
+
+def build_save(self, force_insert=False, only=None, direct=True):
+    if Build.status not in self.dirty_fields:
+        super(Build, self).save(force_insert, only)
+        return
+
+    super(Build, self).save(force_insert, only)
+
+
+def stage_save(self, force_insert=False, only=None, direct=True):
+    if Stage.status not in self.dirty_fields:
+        super(Stage, self).save(force_insert, only)
+        return
+
+    with database_proxy.transaction() as txn:
+        try:
+            if direct and self.status is StageStatus.CANCELED:
+                cancelable = [JobStatus.RUNNING, JobStatus.READY, JobStatus.CREATED]
+                Job.update(status=JobStatus.CANCELED).where((Job.stage == self) & (Job.status << cancelable)).execute()
+            build = self.build
+            old_build_status = build.status
+            statuses = {x.status for x in Stage.select(Stage.status).where((Stage.build == build) & (Stage.id != self.id))}
+            statuses.add(self.status)
+
+            if statuses == set([StageStatus.CREATED]):
+                build.status = BuildStatus.CREATED
+            elif statuses == set([StageStatus.PENDING]):
+                build.status = BuildStatus.PENDING
+            elif StageStatus.RUNNING in statuses:
+                build.status = BuildStatus.RUNNING
+            elif StageStatus.FAILED in statuses and len(set([StageStatus.RUNNING, StageStatus.CREATED, StageStatus.PENDING]) & statuses) == 0:
+                build.status = BuildStatus.FAILED
+            elif statuses == set([StageStatus.SUCCESS]):
+                build.status = BuildStatus.SUCCESS
+            elif statuses == set([StageStatus.SUCCESS, StageStatus.CANCELED]):
+                build.status = BuildStatus.CANCELED
+
+            build.save(direct=False)
+            super(Stage, self).save(force_insert, only)
+        except Exception as e:
+            build.status = old_build_status
+            txn.rollback()
+            raise e
+
+
+def job_save(self, force_insert=False, only=None):
+    if Job.status not in self.dirty_fields:
+        super(Job, self).save(force_insert, only)
+        return
+
+    with database_proxy.transaction() as txn:
+        try:
+            stage = self.stage
+            old_stage_status = stage.status
+            statuses = {x.status for x in Job.select(Job.status).where((Job.stage == stage) & (Job.id != self.id))}
+            statuses.add(self.status)
+
+            # Build > Stage > Job
+            if statuses == set([JobStatus.CREATED]):
+                stage.status = StageStatus.CREATED
+            elif statuses == set([JobStatus.PENDING, JobStatus.READY]):
+                stage.status = StageStatus.PENDING
+            elif JobStatus.RUNNING in statuses:
+                stage.status = StageStatus.RUNNING
+            elif statuses in [set(x) for x in [[JobStatus.FAILED], [JobStatus.FAILED, JobStatus.CANCELED], [JobStatus.FAILED, JobStatus.SUCCESS], [JobStatus.FAILED, JobStatus.CANCELED, JobStatus.SUCCESS]]]:
+                stage.status = StageStatus.FAILED
+            elif statuses == set([JobStatus.SUCCESS]):
+                stage.status = StageStatus.SUCCESS
+            elif statuses in [set(x) for x in [[JobStatus.SUCCESS, JobStatus.CANCELED], [JobStatus.CANCELED]]]:
+                stage.status = StageStatus.CANCELED
+
+            stage.save(direct=False)
+            super(Job, self).save(force_insert, only)
+        except Exception as e:
+            stage.status = old_stage_status
+            txn.rollback()
+            raise e
+
+
+Stage.save = stage_save
+Job.save = job_save
+Build.save = build_save
+
 

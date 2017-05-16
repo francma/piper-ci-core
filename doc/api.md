@@ -1,28 +1,107 @@
-# Úvod
+# API
 
-Veškerá komunikace s řídící komponentou bude probíhat přes REST API.
+## `/runner`
 
-## Uživatelé
+### GET
 
-- /users [GET, POST]
-- /users/\<userId\> [PATCH, DELETE]
+## `/runner/<id>`
 
-## Projekty
+### GET
 
-- /projects [GET, POST]
-- /projects/\<projectId\> [GET, PATCH, DELETE]
+### POST
 
-## Kontejnery
+Edituj runner
 
-- /containers [GET, POST]
-- /containers/\<containerId\> [GET, PATCH, DELETE]
+### PUT
 
-## Build
+## `/runner/<id>/project`
 
-- /build [GET, POST]
-- /build/pop/\<containerSecret\> [GET]
-- /build/\<buildId\>/ [GET]
+### GET
 
-## Streaming log
+Vrat mi list s ID projekty ktere ma runner prirazeno
 
-- /build/stream [WS]
+### POST
+
+Pridej projekt k runneru.
+
+## `/runner/<id>/project/<id>`
+
+### DEL
+
+Odeber projekt s <id> od runneru.
+
+## `/project`
+
+### GET
+
+### POST
+
+## `/project/<id>`
+
+### GET
+
+### PUT
+
+### DELETE
+
+## `/project/<id>/user`
+
+### POST
+
+### GET
+
+## `/project/<id>/user/<id>`
+
+### DEL
+
+### PUT
+
+### GET
+
+## `/project/<id>/runner`
+
+### POST
+
+### GET
+
+## `/project/<id>/runner/<id>`
+
+### DEL
+
+## `/build`
+
+### GET
+
+(filters: project_id, user_id)
+
+## `/build/<id>`
+
+### GET
+
+### DELETE
+
+### PUT
+
+## `/stage`  (filters: build_id, project_id, user_id)
+
+### GET
+
+## `/stage/<id>`
+
+### GET
+
+### PUT
+
+### DEL
+
+## `/job` (filters: build_id, project_id, stage_id, user_id)
+
+### GET
+
+## `/job/<id>`
+
+### GET
+
+### DEL
+
+### PUT

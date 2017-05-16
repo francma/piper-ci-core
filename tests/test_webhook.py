@@ -26,7 +26,6 @@ def test_first(connection, monkeypatch):
 
     build = builds[0]
     assert build.project == project
-    assert build.status == BuildStatus.NEW
     assert build.ref == 'refs/heads/master'
     assert build.commit == 'd9346cf45f551bce7f02c810e44fbc9776734baf'
 
@@ -36,19 +35,17 @@ def test_first(connection, monkeypatch):
     assert stages[0].name == 'one'
     assert stages[0].order == 0
     assert stages[0].build == build
-    assert stages[0].status == StageStatus.NEW
 
     assert stages[1].name == 'two'
     assert stages[1].order == 1
     assert stages[1].build == build
-    assert stages[1].status == StageStatus.NEW
 
     jobs = Job.select().where(Job.stage == stages[0])
     jobs = list(jobs)
     assert len(jobs) == 1
     job = jobs[0]
     assert job.stage == stages[0]
-    assert job.status == JobStatus.NEW
+    assert job.status == JobStatus.CREATED
     assert job.group == group
     assert job.image == 'IMAGE'
     assert job.only == '$PIPER_BRANCH == master'

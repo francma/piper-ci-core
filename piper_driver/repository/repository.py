@@ -3,7 +3,7 @@ from typing import Dict
 from typing import List
 
 from piper_driver.addins.exceptions import PiperException
-from piper_driver.models.entities import User
+from piper_driver.models import User
 
 
 class RepositoryException(PiperException):
@@ -16,14 +16,26 @@ class RepositoryNotImplementedException(RepositoryException):
 
 class Repository:
 
-    def get(self, idx, properties: List[str], user: User):
+    @staticmethod
+    def get(idx, user: User) -> Dict[Any, Any]:
         raise RepositoryNotImplementedException
 
-    def update(self, idx, properties: Dict[str, Any], user: User):
+    @staticmethod
+    def count(filters: Dict[str, Any], user: User, master: bool) -> int:
         raise RepositoryNotImplementedException
 
-    def create(self, idx, properties: Dict[str, Any], user: User):
+    @staticmethod
+    def list(filters: Dict[str, Any], order: List[str], limit: int, offset: int, user: User) -> List[Dict[Any, Any]]:
         raise RepositoryNotImplementedException
 
-    def list(self, user: User, properties: List[str]):
+    @staticmethod
+    def update(idx, values: Dict[str, Any], user: User) -> None:
+        raise RepositoryNotImplementedException
+
+    @staticmethod
+    def create(values: Dict[str, Any], user: User) -> int:
+        raise RepositoryNotImplementedException
+
+    @staticmethod
+    def delete(idx, user) -> None:
         raise RepositoryNotImplementedException

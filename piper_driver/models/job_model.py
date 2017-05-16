@@ -5,67 +5,62 @@ from peewee import ForeignKeyField
 from peewee import CharField
 
 from piper_driver.addins.exceptions import *
-from piper_driver.models.base_model import BaseModel
+from piper_driver.models.base_model import BaseModel, database_proxy
 from piper_driver.models.fields import EnumField, RandomSecretField
-from piper_driver.models.stage_model import Stage
+from piper_driver.models.stage_model import Stage, StageStatus
 from piper_driver.models.runner_group_model import RunnerGroup
 
 
 class JobStatus(Enum):
-    NEW = 1
-    IN_QUEUE = 2
-    SENT = 3
+    """
+    CREATED -> PENDING | READY | CANCELED
+    PENDING -> READY | CANCELED
+    READY -> RUNNING | FAILED | SUCCESS |  CANCELED
+    RUNNING -> RUNNING | FAILED | SUCCESS |  CANCELED
+    FAILED -> CREATED
+    """
+    CREATED = 1
+    PENDING = 2
+    READY = 3
     RUNNING = 4
-    ERROR = 5
-    COMPLETED = 6
+    FAILED = 5
+    SUCCESS = 6
+    CANCELED = 7
+
+
+class JobError(Enum):
+    STATUS_INVALID_TYPE = 'job.error.status.invalid-type'
+    IMAGE_INVALID_TYPE = 'job.error.image.invalid-type'
+    ONLY_INVALID_TYPE = 'job.error.only.invalid-type'
+    SECRET_READ_ONLY = 'job.error.secret.read-only'
 
 
 class Job(BaseModel):
     id = PrimaryKeyField()
     stage = ForeignKeyField(Stage)
     group = ForeignKeyField(RunnerGroup, null=True)
-    _status = EnumField(choices=JobStatus, default=JobStatus.NEW)
-    _image = CharField(null=True)
-    _only = CharField(null=True)
-    _secret = RandomSecretField()
+    status = EnumField(choices=JobStatus, default=JobStatus.CREATED)
+    image = CharField(null=True)
+    only = CharField(null=True)
+    secret = RandomSecretField()
 
-    @property
-    def secret(self) -> str:
-        return self._secret
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.original_status = self.status
 
-    @secret.setter
-    def secret(self, value):
-        raise RuntimeError('Secret property can not be set!')
+    def validate(self, errors=None):
+        if errors is None:
+            errors = set()
 
-    @property
-    def image(self) -> str:
-        return self._image
+        if self.status is not None and not isinstance(self.status, JobStatus):
+            errors.add(JobError.STATUS_INVALID_TYPE)
 
-    @image.setter
-    def image(self, value: str) -> None:
-        if not isinstance(value, str):
-            raise ModelInvalidValueException
-        self._image = value
+        if self.image is not None and not isinstance(self.image, str):
+            errors.add(JobError.IMAGE_INVALID_TYPE)
 
-    @property
-    def only(self) -> str:
-        return self._only
+        if self.only is not None and not isinstance(self.only, str):
+            errors.add(JobError.ONLY_INVALID_TYPE)
 
-    @only.setter
-    def only(self, value: str) -> None:
-        if not isinstance(value, str):
-            raise ModelInvalidValueException
-        self._only = value
-
-    @property
-    def status(self) -> JobStatus:
-        return self._status
-
-    @status.setter
-    def status(self, value: JobStatus) -> None:
-        if not isinstance(value, JobStatus):
-            raise ModelInvalidValueException
-        self._status = value
-
+        return len(errors) == 0
 
 

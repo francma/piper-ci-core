@@ -5,20 +5,28 @@ from peewee import PrimaryKeyField
 from peewee import CharField
 
 from piper_driver.addins.exceptions import *
-from piper_driver.models.fields import EnumField
+from piper_driver.models.fields import EnumField, RandomSecretField
 from piper_driver.models.base_model import BaseModel
 
 
 class UserRole(Enum):
-    ROOT = 1
+    MASTER = 1
     ADMIN = 2
-    USER = 3
+    NORMAL = 3
+
+    def to_str(self):
+        return self.name.lower()
+
+    @staticmethod
+    def from_str(string: str):
+        return UserRole.__getattr__(string.upper())
 
 
 class User(BaseModel):
     id = PrimaryKeyField()
     _role = EnumField(choices=UserRole)
     _email = CharField(unique=True)
+    token = RandomSecretField()
 
     @property
     def email(self) -> str:
@@ -27,9 +35,9 @@ class User(BaseModel):
     @email.setter
     def email(self, value: str) -> None:
         if not isinstance(value, str):
-            raise ModelInvalidValueException()
+            raise ModelInvalid()
         if not re.match(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', value):
-            raise ModelInvalidValueException('Expected email, got "{}"'.format(value))
+            raise ModelInvalid('Expected email, got "{}"'.format(value))
         self._email = value
 
     @property
@@ -39,5 +47,5 @@ class User(BaseModel):
     @role.setter
     def role(self, value: UserRole) -> None:
         if not isinstance(value, UserRole):
-            raise ModelInvalidValueException()
+            raise ModelInvalid()
         self._role = value
