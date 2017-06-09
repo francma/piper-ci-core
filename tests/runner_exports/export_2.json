@@ -5,6 +5,7 @@
     "3",
     "4"
   ],
+  "env": {},
   "image": "IMAGE",
   "repository": {
     "origin": "https://github.com/francma/piper-ci-test-repo.git",

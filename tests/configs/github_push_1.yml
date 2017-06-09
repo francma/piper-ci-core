@@ -7,7 +7,7 @@ jobs:
     stage: one
     runner: RUNNER
     image: IMAGE
-    only: "$PIPER_BRANCH == master"
+    only: "PIPER_BRANCH == master"
     env:
       a: branch
       c: c
@@ -21,7 +21,7 @@ jobs:
     env:
       a: branch
       c: c
-    only: "$PIPER_BRANCH == master"
+    only: "PIPER_BRANCH == master"
     commands:
       - hej
       - hej

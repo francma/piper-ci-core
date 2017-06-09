@@ -17,13 +17,13 @@ class Repository:
 
 class Branch:
 
-    def __init__(self, ref: str, repository: Repository):
-        self._ref = ref
+    def __init__(self, name: str, repository: Repository):
+        self._name = name
         self._repository = repository
 
     @property
-    def ref(self):
-        return self._ref
+    def name(self):
+        return self._name
 
     @property
     def repository(self):
@@ -32,7 +32,7 @@ class Branch:
 
 class Commit:
 
-    def __init__(self, sha: str, branch: Branch, message: str):
+    def __init__(self, sha: str, branch: Branch, message: str=None):
         self._sha = sha
         self._branch = branch
         self._message = message

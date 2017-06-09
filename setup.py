@@ -35,11 +35,11 @@ setup(
         'peewee',
         'uwsgi',
         'Flask>=0.12',
-        'Flask-uWSGI-WebSocket',
         'pyyaml',
         'redis',
         'simpleeval',
         'requests',
+        'texttable',
     ],
     setup_requires=[
         'pytest-runner',

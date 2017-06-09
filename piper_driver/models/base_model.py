@@ -1,17 +1,14 @@
-from peewee import Proxy
-from peewee import Model
+from peewee import Proxy, Model, SqliteDatabase
 
-from piper_driver.addins.exceptions import *
 
 database_proxy = Proxy()
+
+
+class SqliteFKDatabase(SqliteDatabase):
+    def initialize_connection(self, conn):
+        self.execute_sql('PRAGMA foreign_keys=ON;')
 
 
 class BaseModel(Model):
     class Meta:
         database = database_proxy
-
-    def save(self, force_insert=False, only=None):
-        errors = set()
-        if hasattr(self, 'validate') and not self.validate(errors):
-            raise ModelInvalid(errors=errors)
-        super().save(force_insert, only)

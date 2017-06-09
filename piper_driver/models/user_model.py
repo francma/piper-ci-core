@@ -5,7 +5,7 @@ from peewee import PrimaryKeyField
 from peewee import CharField
 
 from piper_driver.addins.exceptions import *
-from piper_driver.models.fields import EnumField, RandomSecretField
+from piper_driver.models.fields import EnumField, UuidField
 from piper_driver.models.base_model import BaseModel
 
 
@@ -24,28 +24,29 @@ class UserRole(Enum):
 
 class User(BaseModel):
     id = PrimaryKeyField()
-    _role = EnumField(choices=UserRole)
-    _email = CharField(unique=True)
-    token = RandomSecretField()
+    role = EnumField(choices=UserRole)
+    email = CharField(unique=True, max_length=128)
+    token = UuidField()
+    public_key = CharField(null=True)
 
-    @property
-    def email(self) -> str:
-        return self._email
-
-    @email.setter
-    def email(self, value: str) -> None:
-        if not isinstance(value, str):
-            raise ModelInvalid()
-        if not re.match(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', value):
-            raise ModelInvalid('Expected email, got "{}"'.format(value))
-        self._email = value
-
-    @property
-    def role(self) -> UserRole:
-        return self._role
-
-    @role.setter
-    def role(self, value: UserRole) -> None:
-        if not isinstance(value, UserRole):
-            raise ModelInvalid()
-        self._role = value
+    # @property
+    # def email(self) -> str:
+    #     return self._email
+    #
+    # @email.setter
+    # def email(self, value: str) -> None:
+    #     if not isinstance(value, str):
+    #         raise ModelInvalid()
+    #     if not re.match(r'^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$', value):
+    #         raise ModelInvalid('Expected email, got "{}"'.format(value))
+    #     self._email = value
+    #
+    # @property
+    # def role(self) -> UserRole:
+    #     return self._role
+    #
+    # @role.setter
+    # def role(self, value: UserRole) -> None:
+    #     if not isinstance(value, UserRole):
+    #         raise ModelInvalid()
+    #     self._role = value

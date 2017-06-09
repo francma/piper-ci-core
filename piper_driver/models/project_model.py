@@ -14,18 +14,25 @@ class ProjectRole(Enum):
     DEVELOPER = 2
     GUEST = 3
 
+    def to_str(self):
+        return self.name.lower()
+
+    @staticmethod
+    def from_str(string: str):
+        return getattr(ProjectRole, string.upper())
+
 
 class Project(BaseModel):
     id = PrimaryKeyField()
-    origin = CharField(unique=True)
+    origin = CharField(unique=True, max_length=128)
     url = CharField()
     pubkey = CharField(null=True)
 
 
 class ProjectUser(BaseModel):
     role = EnumField(choices=ProjectRole)
-    user = ForeignKeyField(User)
-    project = ForeignKeyField(Project)
+    user = ForeignKeyField(User, on_delete='CASCADE')
+    project = ForeignKeyField(Project, on_delete='CASCADE')
 
     class Meta:
         indexes = (

@@ -2,67 +2,73 @@
 
 ## Global
 
-* UserRole.MASTER
-* UserRole.ADMIN
-* UserRole.NORMAL
+* `UserRole.ROOT`
+* `UserRole.ADMIN`
+* `UserRole.USER`
 
 ## Project
 
-* ProjectRole.MASTER
-* ProjectRole.DEVELOPER
-* ProjectRole.GUEST
+* `ProjectRole.MASTER`
+* `ProjectRole.DEVELOPER`
+* `ProjectRole.GUEST`
 
-UserRole.NORMAL can not be ProjectRole.MASTER
+`UserRole.USER` can not be `ProjectRole.MASTER`
 
-## User
+# Models
 
-|        | UserRole.MASTER | UserRole.ADMIN | UserRole.NORMAL |
-|--------|-----------------|----------------|-----------------|
-| Create | Yes             | Yes (*)        | No              |
-| Edit   | Yes             | No             | No              |
-| View   | Yes             | No             | No              |
+## User (1)
 
-(*) UserRole.Admin can add only Users with UserRole.NORMAL
+|        | `UserRole.ROOT` | `UserRole.ADMIN` | `UserRole.USER` |
+|:-------|:----------------|:-----------------|:----------------|
+| View   | ✓               | ✓                |                 |
+| Create | ✓               | ✓ (2)            |                 |
+| Edit   | ✓               |                  |                 |
+| Delete | ✓               |                  |                 |
+
+(1) User can edit/delete self
+(2) UserRole.Admin can add only Users with UserRole.USER
 
 ## Runner
 
-|        | UserRole.MASTER | UserRole.ADMIN | UserRole.NORMAL |
-|--------|-----------------|----------------|-----------------|
-| View   | Yes             | Yes            | No              |
-| Create | Yes             | No             | No              |
-| Edit   | Yes             | No             | No              |
-| Delete | Yes             | No             | No              |
+|        | `UserRole.ROOT` | `UserRole.ADMIN` | `UserRole.USER` |
+|:-------|:----------------|:-----------------|:----------------|
+| View   | ✓               | ✓                | ✓               |
+| Create | ✓               |                  |                 |
+| Edit   | ✓               |                  |                 |
+| Delete | ✓               |                  |                 |
 
 ## Project
 
-|        | UserRole.MASTER | UserRole.ADMIN | UserRole.NORMAL |
-|--------|-----------------|----------------|-----------------|
-| Create | Yes             | Yes            | No              |
+|        | `UserRole.ROOT` | `UserRole.ADMIN` | `UserRole.USER` |
+|:-------|:----------------|:-----------------|:----------------|
+| Create | ✓               | ✓                |                 |
 
-|        | UserRole.MASTER | ProjectRole.MASTER | ProjectRole.DEVELOPER | ProjectRole.GUEST |
-|--------|-----------------|--------------------|-----------------------|-------------------|
-| View   | Yes             | Yes                | Yes                   | Yes               |
-| Edit   | Yes             | Yes                | No                    | No                |
-| Delete | Yes             | Yes                | No                    | No                |
+|        | `UserRole.ROOT` | `ProjectRole.MASTER` | `ProjectRole.DEVELOPER` | `ProjectRole.GUEST` |
+|:-------|:----------------|:---------------------|:------------------------|:--------------------|
+| View   | ✓               | ✓                    | ✓                       | ✓                   |
+| Edit   | ✓               | ✓                    |                         |                     |
+| Delete | ✓               | ✓                    |                         |                     |
 
 ## Project Users
 
-|        | UserRole.MASTER | ProjectRole.MASTER | ProjectRole.DEVELOPER | ProjectRole.GUEST |
-|--------|-----------------|--------------------|-----------------------|-------------------|
-| View   | Yes             | Yes                | No                    | No                |
-| Create | Yes             | Yes                | No                    | No                |
-| Delete | Yes             | Yes                | No                    | No                |
+|        | `UserRole.ROOT` | `ProjectRole.MASTER` | `ProjectRole.DEVELOPER` | `ProjectRole.GUEST` |
+|:-------|:----------------|:---------------------|:------------------------|:--------------------|
+| View   | ✓               | ✓                    |                         |                     |
+| Create | ✓               | ✓                    |                         |                     |
+| Delete | ✓               | ✓                    | ✓ (1)                   | ✓ (1)               |
+
+(1) Only self
 
 ## Project Runner
 
-|        | UserRole.MASTER | ProjectRole.MASTER | ProjectRole.DEVELOPER | ProjectRole.GUEST |
-|--------|-----------------|--------------------|-----------------------|-------------------|
-| Create | Yes             | Yes                | No                    | No                |
-| Delete | Yes             | Yes                | No                    | No                |
+|        | `UserRole.ROOT` | `ProjectRole.MASTER` | `ProjectRole.DEVELOPER` | `ProjectRole.GUEST` |
+|:-------|:----------------|:---------------------|:------------------------|:--------------------|
+| Create | ✓               | ✓                    |                         |                     |
+| Delete | ✓               | ✓                    |                         |                     |
 
 ## Build/Stage/Job
 
-|        | UserRole.MASTER | ProjectRole.MASTER | ProjectRole.DEVELOPER | ProjectRole.GUEST |
-|--------|-----------------|--------------------|-----------------------|-------------------|
-| View   | Yes             | Yes                | Yes                   | Yes               |
-| Cancel | Yes             | Yes                | Yes                   | No                |
+|        | `UserRole.ROOT` | `ProjectRole.MASTER` | `ProjectRole.DEVELOPER` | `ProjectRole.GUEST` |
+|:-------|:----------------|:---------------------|:------------------------|:--------------------|
+| View   | ✓               | ✓                    | ✓                       | ✓                   |
+| Cancel | ✓               | ✓                    | ✓                       |                     |

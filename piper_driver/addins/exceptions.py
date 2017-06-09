@@ -13,7 +13,7 @@ class ModelInvalid(ModelException):
         self.errors = errors
 
 
-class JobOnlyExpressionException(PiperException):
+class JobExpressionException(PiperException):
     pass
 
 
@@ -26,4 +26,8 @@ class RepositoryNotFound(RepositoryException):
 
 
 class RepositoryPermissionDenied(RepositoryException):
+    pass
+
+
+class ShellException(PiperException):
     pass

@@ -8,7 +8,7 @@ from piper_driver.repository.repository import Repository
 class IdentityRepository(Repository):
 
     @staticmethod
-    def get(idx, user: User) -> Dict[Any, Any]:
+    def get(user: User, idx) -> Dict[Any, Any]:
         result = {
             'id': user.id,
             'email': user.email,
@@ -19,7 +19,7 @@ class IdentityRepository(Repository):
         return result
 
     @staticmethod
-    def update(idx, values: Dict[str, Any], user: User) -> None:
+    def update(user: User, idx, values: Dict[str, Any]) -> None:
         allowed = {'email', 'token'}
 
         for k, v in values.items():

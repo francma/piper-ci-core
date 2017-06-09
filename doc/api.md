@@ -1,107 +1,54 @@
-# API
+# API structure
 
-## `/runner`
+*  `/runners`
+   *  `/runners/[id]`
+* `/projects`
+  * `/projects/[project_id]`
+  * `/projects/[project_id]/builds` → `/build?project=[project_id]`
+  * `/projects/[project_id]/stages` → `/stages?project=[project_id]`
+  * `/projects/[project_id]/jobs` → `/jobs?project=[project_id]`
+  * `/projects/[project_id]/users`
+  * `/projects/[project_id]/users/[user_id]`
+* `/builds`
+  * `/builds/[build_id]`
+  * `/builds/[build_id]/cancel`
+  * `/builds/[build_id]/restart`
+  * `/builds/[build_id]/stages` → `/stages?build=[build_id]`
+  * `/builds/[build_id]/jobs` → `/jobs?build=[build_id]`
+* `/stages`
+  * `/stages/[stage_id]`
+  * `/stages/[stage_id]/cancel`
+  * `/stages/[stage_id]/restart`
+  * `/stages/[stage_id]/jobs` → `/jobs?stage=[stage_id]`
+* `/jobs`
+  * `/jobs/[job_id]`
+  * `/jobs/[job_id]/cancel`
+  * `/jobs/[job_id]/restart`
+  * `/jobs/[job_id]/log`
+  * `/jobs/queue/[runner_token]`
+  * `/jobs/report/[job_secret]`
+* `/identity`
+* `/users`
+  * `/users/[user_id]`
+* `/webhook`
 
-### GET
 
-## `/runner/<id>`
+## `/projects`
 
-### GET
+## `/builds`
 
-### POST
+Filters
+* project = int
 
-Edituj runner
+## `/stages`
 
-### PUT
+Filters
+* build = int
+* project = int
 
-## `/runner/<id>/project`
+## `/jobs`
 
-### GET
-
-Vrat mi list s ID projekty ktere ma runner prirazeno
-
-### POST
-
-Pridej projekt k runneru.
-
-## `/runner/<id>/project/<id>`
-
-### DEL
-
-Odeber projekt s <id> od runneru.
-
-## `/project`
-
-### GET
-
-### POST
-
-## `/project/<id>`
-
-### GET
-
-### PUT
-
-### DELETE
-
-## `/project/<id>/user`
-
-### POST
-
-### GET
-
-## `/project/<id>/user/<id>`
-
-### DEL
-
-### PUT
-
-### GET
-
-## `/project/<id>/runner`
-
-### POST
-
-### GET
-
-## `/project/<id>/runner/<id>`
-
-### DEL
-
-## `/build`
-
-### GET
-
-(filters: project_id, user_id)
-
-## `/build/<id>`
-
-### GET
-
-### DELETE
-
-### PUT
-
-## `/stage`  (filters: build_id, project_id, user_id)
-
-### GET
-
-## `/stage/<id>`
-
-### GET
-
-### PUT
-
-### DEL
-
-## `/job` (filters: build_id, project_id, stage_id, user_id)
-
-### GET
-
-## `/job/<id>`
-
-### GET
-
-### DEL
-
-### PUT
+Filters:
+* project = int
+* build = int
+* stage = int

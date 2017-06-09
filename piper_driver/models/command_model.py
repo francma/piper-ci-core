@@ -11,4 +11,4 @@ class Command(BaseModel):
     id = PrimaryKeyField()
     order = IntegerField()
     cmd = CharField()
-    job = ForeignKeyField(Job)
+    job = ForeignKeyField(Job, on_delete='CASCADE')

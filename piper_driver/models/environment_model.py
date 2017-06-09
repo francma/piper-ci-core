@@ -1,38 +1,30 @@
-from typing import Union
-import pickle
-import re
-
-from peewee import PrimaryKeyField
-from peewee import ForeignKeyField
-from peewee import CharField
+from peewee import PrimaryKeyField, ForeignKeyField, CharField
 
 from piper_driver.addins.exceptions import *
 from piper_driver.models.base_model import BaseModel
 from piper_driver.models.job_model import Job
+from piper_driver.models.fields import PickleField
 
 
 class Environment(BaseModel):
     id = PrimaryKeyField()
-    _name = CharField()
-    _value = CharField()
-    job = ForeignKeyField(Job)
+    name = CharField()
+    value = PickleField()
+    job = ForeignKeyField(Job, on_delete='CASCADE')
 
-    @property
-    def value(self) -> None:
-        return pickle.loads(self._value)
+    def validate(self, errors=None):
+        if errors is None:
+            errors = list()
 
-    @value.setter
-    def value(self, value: Union[int, str, bool]):
-        if type(value) not in [int, str, bool]:
-            raise ModelInvalid('Type {} is not supported'.format(type(value)))
-        self._value = pickle.dumps(value)
+        if type(self.value) not in [int, str, bool]:
+            errors.append('Type {} is not supported')
 
-    @property
-    def name(self) -> str:
-        return self._name
+        return len(errors) == 0
 
-    @name.setter
-    def name(self, value: str) -> None:
-        if not re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', value) or len(value) > 255:
-            raise ModelInvalid('Invalid name for environment variable.')
-        self._name = value
+    def save(self, force_insert=False, only=None):
+        errors = list()
+        if not self.validate(errors):
+            raise ModelInvalid(errors)
+
+        return super().save(force_insert, only)
+
