@@ -45,5 +45,5 @@ def query_parse(f):
         else:
             order = []
 
-        return f(filters=query, order=order, limit=limit, offset=offset, *args, **kwargs)
+        return f(filters=dict(query), order=order, limit=limit, offset=offset, *args, **kwargs)
     return decorated_function

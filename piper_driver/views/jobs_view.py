@@ -48,9 +48,12 @@ def jobs_view_queue_pop(runner_token: str):
     except DoesNotExist:
         return '', HTTPStatus.NOT_FOUND
 
-    job = JobQueue.pop(runner)
-    if job is None:
-        return '', HTTPStatus.OK
+    while True:
+        job = JobQueue.pop(runner)
+        if job is None:
+            return '', HTTPStatus.OK
+        if job.status is not JobStatus.READY:
+            continue
 
     job.status = JobStatus.RUNNING
 
@@ -77,17 +80,22 @@ def jobs_view_report(secret: str):
         JobRepository.append_log(job, flask.request.data)
 
         return flask.jsonify({'status': ResponseJobStatus.OK.value})
-
-    if runner_status is RequestJobStatus.ERROR:
+    elif runner_status is RequestJobStatus.ERROR:
         job.status = JobStatus.ERROR
         job.save()
         return flask.jsonify({'status': ResponseJobStatus.ERROR.value})
-
-    if runner_status is RequestJobStatus.COMPLETED:
+    elif runner_status is RequestJobStatus.COMPLETED:
         JobRepository.append_log(job, flask.request.data)
         # TODO we should check logs for actual status
         job.status = JobStatus.SUCCESS
         job.save()
+
+        # Push Jobs from next stage if current stage is SUCCESS
+        jobs = Job.select().join(Stage).join(Build)\
+            .where((Stage.order == job.stage.order + 1) & (Job.status == JobStatus.READY))
+        for job in jobs:
+            JobQueue.push(job)
+
         return flask.jsonify({'status': ResponseJobStatus.OK.value})
 
 

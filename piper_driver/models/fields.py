@@ -1,5 +1,4 @@
 import uuid
-import pickle
 
 from peewee import Field
 
@@ -27,15 +26,3 @@ class UuidField(Field):
     def python_value(self, value):
         return uuid.UUID(value)
 
-
-class PickleField(Field):
-    db_field = 'varchar(255)'
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def db_value(self, value):
-        return pickle.dumps(value)
-
-    def python_value(self, value):
-        return pickle.loads(value)

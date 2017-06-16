@@ -27,7 +27,9 @@ class BuildsRepository(Repository):
         result = {
             'id': build.id,
             'project_id': build.project.id,
-            'status': build.status,
+            'status': build.status.to_str(),
+            'branch': build.branch,
+            'commit': build.commit,
         }
 
         return result
@@ -82,7 +84,9 @@ class BuildsRepository(Repository):
             result.append({
                 'id': build.id,
                 'project_id': build.project.id,
-                'status': build.status,
+                'status': build.status.to_str(),
+                'branch': build.branch,
+                'commit': build.commit,
             })
 
         return result

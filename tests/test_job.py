@@ -158,5 +158,45 @@ def test_log_read(connection):
         assert r.data == b'45'
 
 
+def test_status(connection):
+    project = Project.create(url='https://A', origin='https://github.com/francma/piper-ci-test-repo.git')
+    build = Build.create(project=project, branch='a', commit='634721d9da222050d41dce164d9de35fe475aa7a')
+    stage1 = Stage.create(name='first', order=1, build=build)
+    Job.create(stage=stage1, image='IMAGE')
+    Job.create(stage=stage1, image='IMAGE')
+    Job.create(stage=stage1, image='IMAGE')
+    stage2 = Stage.create(name='first', order=2, build=build)
+    Job.create(stage=stage2, image='IMAGE')
+    Job.create(stage=stage2, image='IMAGE')
+    Job.create(stage=stage2, image='IMAGE')
+    stage3 = Stage.create(name='first', order=3, build=build)
+    Job.create(stage=stage3, image='IMAGE')
+    Job.create(stage=stage3, image='IMAGE')
+    Job.create(stage=stage3, image='IMAGE')
+
+    stage1.status = StageStatus.READY
+    stage1.save()
+
+    stage1.status = StageStatus.RUNNING
+    stage1.save()
+    assert Stage.get(Stage.id == stage2).status is StageStatus.PENDING
+    assert Stage.get(Stage.id == stage3).status is StageStatus.PENDING
+    for job in Job.select().where(Job.stage == stage2 | Job.stage == stage3):
+        assert job.status is JobStatus.PENDING
+
+    with connection.atomic():
+        for job in Job.select().where(Job.stage == stage1):
+            job.status = JobStatus.SUCCESS
+            job.save()
+
+    assert Stage.get(Stage.id == stage2).status is StageStatus.READY
+    for job in Job.select().where(Job.stage == stage2):
+        assert job.status is JobStatus.READY
+
+
+
+
+
+
 
 

@@ -99,4 +99,5 @@ def test_rest_get(connection):
     client = app.test_client()
     r = client.get('/projects/' + str(project1.id), headers={'Authorization': 'Bearer ' + str(user1.token)})
     assert r.status_code == 200
-    assert json.loads(r.get_data())
+    assert r.mimetype == 'application/json'
+    assert json.loads(r.get_data(as_text=True))

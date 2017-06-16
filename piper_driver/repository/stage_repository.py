@@ -27,7 +27,7 @@ class StagesRepository(Repository):
         result = {
             'id': stage.id,
             'build': stage.build.id,
-            'status': stage.status,
+            'status': stage.status.to_str(),
             'name': stage.name,
             'order': stage.order,
         }
@@ -82,7 +82,7 @@ class StagesRepository(Repository):
             result.append({
                 'id': stage.id,
                 'build': stage.build.id,
-                'status': stage.status,
+                'status': stage.status.to_str(),
                 'name': stage.name,
                 'order': stage.order,
             })

@@ -33,7 +33,6 @@ setup(
     install_requires=[
         'click',
         'peewee',
-        'uwsgi',
         'Flask>=0.12',
         'pyyaml',
         'redis',

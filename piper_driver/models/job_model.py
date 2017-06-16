@@ -91,6 +91,7 @@ class Job(BaseModel):
                     JobStatus.FAILED,
                     JobStatus.CANCELED,
                     JobStatus.SKIPPED,
+                    JobStatus.SUCCESS,
                 ]
 
                 for s in severity:
@@ -104,7 +105,7 @@ class Job(BaseModel):
                 txn.rollback()
                 raise e
 
-    def validate(self, errors=None):
+    def validate(self, errors=None) -> bool:
         if errors is None:
             errors = list()
 
@@ -167,7 +168,7 @@ class Job(BaseModel):
 
         return path
 
-    def read_log(self, offset: int=0, limit: int=100):
+    def read_log(self, offset: int=0, limit: int=100) -> bytes:
         with open(self.log_path, 'rb') as fp:
             if offset is not None:
                 fp.seek(offset)
@@ -175,6 +176,6 @@ class Job(BaseModel):
 
         return data
 
-    def append_log(self, contents):
+    def append_log(self, contents) -> None:
         with open(self.log_path, mode='ab') as fp:
             fp.write(contents)

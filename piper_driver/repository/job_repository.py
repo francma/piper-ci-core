@@ -32,10 +32,10 @@ class JobRepository(Repository):
         result = {
             'id': job.id,
             'stage_id': job.stage.id,
-            'status': job.status,
+            'status': job.status.to_str(),
             'group': job.group,
             'image': job.image,
-            'only': job.only,
+            'when': job.when,
             'commands': job.commands,
             'env': job.environment,
         }
@@ -81,12 +81,10 @@ class JobRepository(Repository):
             result.append({
                 'id': job.id,
                 'stage_id': job.stage.id,
-                'status': job.status,
+                'status': job.status.to_str(),
                 'group': job.group,
                 'image': job.image,
-                'only': job.only,
-                'commands': job.commands,
-                'env': job.environment,
+                'when': job.when,
             })
 
         return result
@@ -98,19 +96,15 @@ class JobRepository(Repository):
         except DoesNotExist:
             raise RepositoryNotFound
 
-        if user.role is UserRole.MASTER:
-            job.status = JobStatus.CANCELED
-            job.save()
-            return
+        if user.role is not UserRole.MASTER:
+            try:
+                project_role = ProjectUser.get((ProjectUser.user == user) &
+                                               (ProjectUser.project == job.stage.build.project)).role
+            except DoesNotExist:
+                raise RepositoryPermissionDenied
 
-        try:
-            project_role = ProjectUser.get((ProjectUser.user == user) &
-                                           (ProjectUser.project == job.stage.build.project)).role
-        except DoesNotExist:
-            raise RepositoryPermissionDenied
-
-        if project_role not in [ProjectRole.MASTER, ProjectRole.DEVELOPER]:
-            raise RepositoryPermissionDenied
+            if project_role not in [ProjectRole.MASTER, ProjectRole.DEVELOPER]:
+                raise RepositoryPermissionDenied
 
         job.status = JobStatus.CANCELED
         job.save()

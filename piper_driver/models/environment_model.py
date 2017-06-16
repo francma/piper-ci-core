@@ -1,15 +1,15 @@
 from peewee import PrimaryKeyField, ForeignKeyField, CharField
+from playhouse.fields import PickledField
 
 from piper_driver.addins.exceptions import *
 from piper_driver.models.base_model import BaseModel
 from piper_driver.models.job_model import Job
-from piper_driver.models.fields import PickleField
 
 
 class Environment(BaseModel):
     id = PrimaryKeyField()
     name = CharField()
-    value = PickleField()
+    value = PickledField()
     job = ForeignKeyField(Job, on_delete='CASCADE')
 
     def validate(self, errors=None):

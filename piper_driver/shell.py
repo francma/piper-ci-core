@@ -5,6 +5,7 @@ from configparser import ConfigParser
 import re
 
 from texttable import Texttable
+import click
 
 from piper_driver import app
 from piper_driver.models import *
@@ -17,7 +18,10 @@ class PiperShell(cmd.Cmd):
     def __init__(self, user: User, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
-        self.prompt = user.email + '> '
+
+    @property
+    def prompt(self) -> str:
+        return self.user.email + '> '
 
     def onecmd(self, line):
         try:
@@ -81,7 +85,9 @@ class PiperShell(cmd.Cmd):
         print(IdentityRepository.get(self.user, None), file=self.stdout)
 
     def identity_update(self, args):
-        print(ProjectRepository.list(self.user, self._parse_args(args)), file=self.stdout)
+        IdentityRepository.update(self.user, None, self._parse_args(args))
+        self.user = User.get(User.id == self.user.id)
+        print('Updated identity', file=self.stdout)
 
     def do_project(self, args):
         self.route('project', args)
@@ -134,7 +140,7 @@ class PiperShell(cmd.Cmd):
         print(result, file=self.stdout)
 
     def build_count(self, args):
-        print(ProjectRepository.count(self.user, _parse_args(args)))
+        print(ProjectRepository.count(self.user, self._parse_args(args)))
 
     def build_cancel(self, args):
         idx, args = self._pop_id(args)
@@ -260,22 +266,22 @@ class PiperShell(cmd.Cmd):
 #     table.add_rows([result[0].keys(), *[x.values() for x in result]])
 #     return table.draw()
 
-
-if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        print('Expecting exactly 1 argument (user_id)', file=sys.stderr)
-        exit(1)
-
-    try:
-        user_id = int(sys.argv[1])
-    except ValueError:
-        print('First argument should be integer', file=sys.stderr)
-        exit(1)
-
+@click.command()
+@click.argument(
+    'user_id',
+    nargs=1,
+    type=int,
+)
+def main(user_id):
     database = app.get_connection()
     logged_user = User.get(User.id == user_id)
 
     PiperShell(user=logged_user).cmdloop()
+
+
+if __name__ == '__main__':
+    main()
+
 
 
 
