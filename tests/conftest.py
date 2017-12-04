@@ -1,21 +1,20 @@
-import uuid
+import tempfile
+
 from collections import namedtuple
 import io
 import pickle
 import codecs
 
 import pytest
-from redis import Redis
+from peewee import SqliteDatabase
 
-from piper_driver.shell import PiperShell
-from piper_driver.addins.common import Common
-from piper_driver.addins.queue import Queue
-from piper_driver.models import database_proxy, models
-from piper_driver.models.base_model import SqliteFKDatabase
+from piper_core.container import Container
+from piper_core.model import database_proxy, models
+from piper_core.shell import PiperShell
 
 
 def get_debug_db():
-    database = SqliteFKDatabase(':memory:')
+    database = SqliteDatabase(':memory:')
     database_proxy.initialize(database)
     database.create_tables(models)
 
@@ -23,41 +22,46 @@ def get_debug_db():
 
 
 @pytest.fixture()
-def connection(monkeypatch):
+def container(monkeypatch):
     database = get_debug_db()
-    monkeypatch.setattr('piper_driver.app.get_connection', lambda: database)
-    monkeypatch.setattr('piper_driver.app.close_connection', lambda: None)
-    yield database
-    database.close()
-    database = None
+    monkeypatch.setattr('piper_core.container.Container.get_db', lambda x: database)
+
+    with tempfile.TemporaryDirectory() as tempdir:
+        c = Container({
+            'app': {
+                'secret': 'abc',
+                'authorized_keys_path': 'a',
+                'port': 6000,
+                'job_log_dir': tempdir,
+            },
+            'queue': {
+                'backend': 'redis',
+                'url': 'redis://@localhost:6379/12'
+            },
+        })
+
+        c.init_db()
+        yield c
+        c.get_queue().connection.flushdb()
 
 
 @pytest.fixture()
-def redis():
-    Common.REDIS_PREFIX = 'piper:test:' + uuid.uuid4().hex
-    conn = Queue.connection = Redis()
-
-    yield conn
-    for key in conn.keys(Common.REDIS_PREFIX + '*'):
-        conn.delete(key)
-
-
-@pytest.fixture()
-def shell(connection, monkeypatch):
+def shell(container: Container, monkeypatch):
     stdout = io.StringIO()
     user = namedtuple('User', ['email'])
-    shell = PiperShell(user('email'), stdout=stdout)
-    # monkeypatch.setattr('piper_driver.shell._print_list', lambda x: codecs.encode(pickle.dumps(x), "base64").decode())
-    # monkeypatch.setattr('piper_driver.shell._format_get', lambda x: codecs.encode(pickle.dumps(x), "base64").decode())
+
+    monkeypatch.setattr(PiperShell, '_confirm_yes', lambda x: True)
+    piper = container.get_shell(user('email'))
+    piper.stdout = stdout
+    piper.SLEEP_DURATION = 0
 
     def read(pickled=False):
         output = stdout.getvalue()
         stdout.truncate(0)
         stdout.seek(0)
         if pickled:
-            output = pickle.loads(codecs.decode(output.encode(), "base64"))
+            output = pickle.loads(codecs.decode(output.encode(), 'base64'))
 
         return output
 
-    yield read, shell
-
+    yield read, piper

@@ -1,14 +1,16 @@
 import json
 
-from piper_driver.addins.git import *
-from piper_driver.addins.github import parse_webhook, fetch_piper_yml
+from piper_core.container import Container
+from piper_core.utils.git import *
 
 
-def test_push_hook():
+def test_push_hook(container: Container):
+    github = container.get_github()
+
     with open('tests/webhooks/github_push.json') as fd:
         contents = json.load(fd)
 
-    commit = parse_webhook(contents)
+    commit = github.parse_webhook(contents)
 
     assert commit.branch.name == 'master'
     assert commit.branch.repository.origin == 'https://github.com/olipo186/Git-Auto-Deploy.git'
@@ -27,12 +29,11 @@ def test_not_push_hook():
     pass
 
 
-def test_fetch_piper_yml():
+def test_fetch_piper_yml(container: Container):
+    github = container.get_github()
+
     repo = Repository(origin='git@github.com:francma/piper-ci-test-repo.git')
     branch = Branch(name='master', repository=repo)
     commit = Commit(sha='d9346cf45f551bce7f02c810e44fbc9776734baf', branch=branch, message='EMPTY')
 
-    fetch_piper_yml(commit)
-
-
-
+    github.fetch_piper_yml(commit)

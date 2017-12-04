@@ -1,0 +1,1041 @@
+openapi: 3.0.0
+info:
+  title: Piper CI Core API
+  version: 0.0.1
+paths:
+  # done
+  /builds:
+    get:
+      tags: [builds]
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/offset"
+        - in: query
+          name: order
+          description: Order items by value
+          schema:
+            type: string
+            enum: [created-desc, created-asc]
+        - in: query
+          name: status
+          description: Filter builds by status
+          schema:
+            type: string
+            enum: [created, ready, pending, running, failed, success, canceled, skipped, error]
+        - in: query
+          name: branch
+          description: Filter builds by GIT branch
+          schema:
+            type: string
+      responses:
+        200:
+          description: Returns list of builds
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/build"
+  # done
+  /builds/{build-id}:
+    parameters:
+      - name: build-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [builds]
+      responses:
+        200:
+          description: Returns build
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/build"
+        404:
+          description: There is no such build
+  # done
+  /builds/{build-id}/cancel:
+    parameters:
+      - name: build-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      security:
+        - BasicAuth: []
+      tags: [builds]
+      responses:
+        200:
+          description: Build was canceled
+        400:
+          description: Build cannot be canceled
+        404:
+          description: There is no such build
+
+  /builds/{build-id}/stages:
+    parameters:
+      - name: build-id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - $ref: "#/components/parameters/limit"
+      - $ref: "#/components/parameters/offset"
+      - in: query
+        name: status
+        description: Filter stages by status
+        schema:
+          type: string
+          enum: [created, ready, pending, running, failed, success, canceled, skipped, error]
+    get:
+      tags: [stages]
+      responses:
+        200:
+          description: Returns list of stages in build
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/stage"
+        404:
+          description: There is no such build
+  # done
+  /jobs:
+    get:
+      tags: [jobs]
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/offset"
+        - in: query
+          name: status
+          description: Filter jobs by status
+          schema:
+            type: string
+            enum: [created, ready, pending, running, failed, success, canceled, skipped, error]
+      responses:
+        200:
+          description: Returns list of jobs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/job"
+  # done
+  /jobs/{job-id}:
+    parameters:
+      - name: job-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [jobs]
+      responses:
+        200:
+          description: Identity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/job"
+        404:
+          description: There is no such job
+  # done
+  /jobs/{job-id}/cancel:
+    parameters:
+      - name: job-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      security:
+        - BasicAuth: []
+      tags: [jobs]
+      responses:
+        200:
+          description: Job was canceled
+        404:
+          description: There is no such job
+        400:
+          description: Job cant be canceled (not cancelable status)
+  # done
+  /jobs/queue/{runner-token}:
+    parameters:
+      - name: runner-token
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      tags: [jobs]
+      responses:
+        200:
+          description: Returns job export or empty response on no job available
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/job-export"
+  # done
+  /jobs/report/{job-secret}:
+    parameters:
+      - name: job-secret
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: status
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [running, completed, error]
+    post:
+      tags: [jobs]
+      responses:
+        200:
+          description: Process request and responds with status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, cancel, error]
+      requestBody:
+        description: Raw job output
+        content:
+          text/plain:
+            schema:
+              type: string
+
+  /jobs/{job-id}/log:
+    parameters:
+      - name: job-id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: Range
+        in: header
+        description: Get only portion of job log
+        schema:
+          type: string
+          format: bytes [from]-[to]
+    get:
+      tags: [jobs]
+      responses:
+        200:
+          description: Returns job log
+        404:
+          description: There is no such job
+  # done
+  /projects:
+    get:
+      tags: [projects]
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/offset"
+        - in: query
+          name: order
+          description: Order items by value
+          schema:
+            type: string
+            enum: [created-desc, created-asc]
+        - in: query
+          name: status
+          description: Filter projects by status
+          schema:
+            type: string
+            enum: [unknown, running, failed, success, canceled, skipped, error]
+      responses:
+        200:
+          description: Returns list of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/project"
+    post:
+      tags: [projects]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/project"
+      responses:
+        200:
+          description: Project was created
+        400:
+          description: Provided project is not valid
+  # done
+  /projects/{project-id}:
+    parameters:
+      - name: project-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [projects]
+      responses:
+        200:
+          description: Identity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/project"
+        404:
+          description: There is no such project
+    put:
+      security:
+        - BasicAuth: []
+      tags: [projects]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/project"
+      responses:
+        200:
+          description: Project was updated
+        404:
+          description: There is no such project
+        400:
+          description: Provided project is not valid
+    delete:
+      security:
+        - BasicAuth: []
+      tags: [projects]
+      responses:
+        204:
+          description: Project was deleted
+        404:
+          description: There is no such project
+  # done
+  /projects/{project-id}/builds:
+    parameters:
+      - $ref: "#/components/parameters/limit"
+      - $ref: "#/components/parameters/offset"
+      - name: project-id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - in: query
+        name: order
+        description: Order items by value
+        schema:
+          type: string
+          enum: [created-desc, created-asc]
+      - in: query
+        name: status
+        description: Filter builds by status
+        schema:
+          type: string
+          enum: [created, ready, pending, running, failed, success, canceled, skipped, error]
+      - in: query
+        name: branch
+        description: Filter builds by GIT branch
+        schema:
+          type: string
+    get:
+      tags: [builds]
+      responses:
+        200:
+          description: Returns liat of builds from project
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/build"
+        404:
+          description: There is no such project
+
+  /projects/{project-id}/stages:
+    parameters:
+      - $ref: "#/components/parameters/limit"
+      - $ref: "#/components/parameters/offset"
+      - in: query
+        name: status
+        description: Filter stages by status
+        schema:
+          type: string
+          enum: [created, ready, pending, running, failed, success, canceled, skipped, error]
+      - name: project-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [stages]
+      responses:
+        200:
+          description: returns list of stages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/stage"
+        404:
+          description: There is no such project
+  # done
+  /projects/{project-id}/users:
+    parameters:
+      - name: project-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [projects]
+      security:
+        - BasicAuth: []
+      responses:
+        200:
+          description: Returns list of users in project
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  allOf:
+                    - $ref: "#/components/schemas/user"
+                  properties:
+                    project_role:
+                      type: string
+                      enum: [master, developer]
+        404:
+          description: There is no such project
+    post:
+      security:
+        - BasicAuth: []
+      tags: [projects]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: "#/components/schemas/project-user-modify"
+      responses:
+        201:
+          description: User was added to project
+        404:
+          description: There is no such project
+  /projects/{project-id}/users/{user-id}:
+    parameters:
+      - name: project-id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: user-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    delete:
+      security:
+        - BasicAuth: []
+      tags: [projects]
+      responses:
+        204:
+          description: User was removed from project
+    put:
+      security:
+        - BasicAuth: []
+      tags: [projects]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              $ref: "#/components/schemas/project-user-modify"
+      responses:
+        200:
+          description: User role was modified
+        404:
+          description: There is no such project
+
+  /stages:
+    get:
+      tags: [stages]
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/offset"
+        - in: query
+          name: status
+          description: Filter stages by status
+          schema:
+            type: string
+            enum: [created, ready, pending, running, failed, success, canceled, skipped, error]
+      responses:
+        200:
+          description: Returns list of stages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/stage"
+
+  /stages/{stage-id}:
+    parameters:
+      - name: stage-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags: [stages]
+      responses:
+        200:
+          description: Returns stage
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/stage"
+        404:
+          description: There is no such stage
+
+  /stages/{stage-id}/cancel:
+    parameters:
+      - name: stage-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    post:
+      security:
+        - BasicAuth: []
+      tags: [stages]
+      responses:
+        200:
+          description: Stage was canceled
+        404:
+          description: There is no such stage
+
+  /runners:
+    parameters:
+      - $ref: "#/components/parameters/limit"
+      - $ref: "#/components/parameters/offset"
+      - name: group
+        in: query
+        description: Filter runners by group
+        schema:
+          type: string
+    get:
+      security:
+        - BasicAuth: []
+      tags: [runners]
+      responses:
+        200:
+          description: Returns list of runners
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/runner"
+    post:
+      security:
+        - BasicAuth: []
+      tags: [runners]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/runner"
+      responses:
+        201:
+          description: Runner was created
+        400:
+          description: Provided runner is invalid
+
+  /runners/{runner-id}:
+    parameters:
+      - name: runner-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      security:
+        - BasicAuth: []
+      tags: [runners]
+      responses:
+        200:
+          description: Returns runner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/runner"
+        404:
+          description: There is no such runner
+    put:
+      security:
+        - BasicAuth: []
+      tags: [runners]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/runner"
+      responses:
+        200:
+          description: Runner was updated
+        404:
+          description: There is no such runner
+    delete:
+      security:
+        - BasicAuth: []
+      tags: [runners]
+      responses:
+        204:
+          description: Runner was deleted
+        404:
+          description: There is no such runner
+
+  /users:
+    get:
+      security:
+        - BasicAuth: []
+      tags: [users]
+      parameters:
+        - $ref: "#/components/parameters/limit"
+        - $ref: "#/components/parameters/offset"
+        - name: email
+          in: query
+          description: Filters users by email
+          schema:
+            type: string
+      responses:
+        200:
+          description: Returns list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  $ref: "#/components/schemas/user"
+    post:
+      security:
+        - BasicAuth: []
+      tags: [users]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/user"
+      responses:
+        201:
+          description: User was created
+        400:
+          description: Provided user is invalid
+
+  /users/{user-id}:
+    parameters:
+      - name: user-id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      security:
+        - BasicAuth: []
+      tags: [users]
+      responses:
+        200:
+          description: Returns user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/user"
+        404:
+          description: There is no such user
+    put:
+      security:
+        - BasicAuth: []
+      tags: [users]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/user"
+      responses:
+        200:
+          description: User was updated
+        404:
+          description: There is no such user
+    delete:
+      security:
+        - BasicAuth: []
+      tags: [users]
+      responses:
+        204:
+           description: User was deleted
+        404:
+          description: There is no such user
+
+  /identity:
+    get:
+      security:
+        - BasicAuth: []
+      tags: [users]
+      responses:
+        200:
+          description: Identity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/user"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+  parameters:
+    limit:
+      in: query
+      name: limit
+      description: Maximum number of items returned
+      schema:
+        type: integer
+    offset:
+      in: query
+      name: offset
+      description: Skip first n items
+      schema:
+        type: integer
+  schemas:
+    build:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        project_id:
+          type: integer
+        status:
+          type: string
+          enum: [created, ready, pending, running, failed, success, canceled, skipped, error]
+        branch:
+          type: string
+        commit:
+          type: string
+          format: sha1
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+    stage:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        status:
+          type: string
+          enum: [created, ready, pending, running, failed, success, canceled, skipped, error]
+        name:
+          type: string
+        order:
+          type: integer
+        build_id:
+          type: integer
+    job:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        stage_id:
+          type: integer
+        status:
+          type: string
+          enum: [created, ready, pending, running, failed, success, canceled, skipped, error]
+        group:
+          type: string
+        image:
+          type: string
+        when:
+          type: string
+        commands:
+          type: array
+          items:
+            type: string
+        env:
+          type: array
+          items:
+            type: object
+          example:
+            HELLO: value
+            WORLD: field
+    job-export:
+      type: object
+      additionalProperties: false
+      properties:
+        secret:
+          type: string
+        commands:
+          type: array
+          items:
+            type: string
+        after_failure:
+          type: array
+          items:
+            type: string
+        image:
+          type: string
+        env:
+          oneOf:
+            - type: object
+              additionalProperties:
+                type: string
+                minLength: 1
+                maxLength: 255
+            - type: object
+              additionalProperties:
+                type: integer
+            - type: object
+              additionalProperties:
+                type: boolean
+        repository:
+          type: object
+          properties:
+            origin:
+              type: string
+            commit:
+              type: string
+            branch:
+              type: string
+    project:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        origin:
+          type: string
+          minLength: 1
+          maxLength: 255
+        url:
+          type: string
+          minLength: 1
+          maxLength: 255
+        status:
+          type: string
+          enum: [unknown, running, failed, success, canceled, skipped, error]
+          readOnly: true
+      required:
+        - origin
+        - url
+    runner:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        group:
+          type: string
+          minLength: 1
+          maxLength: 255
+        token:
+          type: string
+          minLength: 20
+          maxLength: 255
+      required:
+        - group
+        - token
+    user:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        role:
+          type: string
+          enum: [master, admin, normal]
+        email:
+          type: string
+          pattern: '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+          maxLength: 255
+        token:
+          type: string
+          minLength: 20
+          maxLength: 255
+        public_key:
+          type: string
+          pattern: '^ssh-rsa AAAA[0-9A-Za-z+/]+[=]{0,3}$'
+      required:
+        - role
+        - email
+        - public_key
+    project-user-modify:
+      type: object
+      additionalProperties: false
+      properties:
+        user_id:
+          type: integer
+        role:
+          type: string
+          enum: [master, developer]
+        project_id:
+          type: integer
+      required:
+        - user_id
+        - role
+        - project_id
+    project-user-remove:
+      type: object
+      additionalProperties: false
+      properties:
+        user_id:
+          type: integer
+        project_id:
+          type: integer
+      required:
+        - user_id
+        - project_id
+    github-hook:
+      type: object
+      properties:
+        repository:
+          type: object
+          properties:
+            clone_url:
+              type: string
+          required:
+            - clone_url
+        commits:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              message:
+                type: string
+            required:
+              - id
+              - message
+        ref:
+          type: string
+        after:
+          type: string
+      required:
+        - repository
+        - ref
+        - after
+    piper-yml:
+      type: object
+      additionalProperties: false
+      properties:
+        stages:
+          type: array
+          items:
+            type: string
+        jobs:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              stage:
+                type: string
+                minLength: 1
+                maxLength: 255
+              only:
+                type: string
+                minLength: 1
+                maxLength: 255
+              runner:
+                type: string
+                minLength: 1
+                maxLength: 255
+              image:
+                type: string
+                minLength: 1
+                maxLength: 255
+              env:
+                type: object
+                additionalProperties:
+                  oneOf:
+                    - type: string
+                      minLength: 1
+                      maxLength: 255
+                    - type: integer
+                      minLength: 1
+                      maxLength: 255
+                    - type: boolean
+                      minLength: 1
+                      maxLength: 255
+              commands:
+                type: array
+                items:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+              after_failure:
+                type: array
+                items:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+            required:
+              - stage
+              - image
+              - commands
+      required:
+        - stages
+
+    config:
+      type: object
+      additionalProperties: false
+      properties:
+        database:
+          type: object
+          additionalProperties: false
+          properties:
+            dsn:
+              type: string
+        app:
+          type: object
+          additionalProperties: false
+          properties:
+            secret:
+              type: string
+            authorized_keys_path:
+              type: string
+            job_log_dir:
+              type: string
+        queue:
+          type: object
+          additionalProperties: false
+          properties:
+            url:
+              type: string

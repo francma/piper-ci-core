@@ -2,30 +2,30 @@
 
 ## Job
 
-`JobStatus.CREATED`
-`JobStatus.PENDING`
-`JobStatus.RUNNING`
-`JobStatus.FAILED`
-`JobStatus.SUCCESS`
-`JobStatus.CANCELED`
-`JobStatus.SKIPPED`
-`JobStatus.ERROR`
+`Status.CREATED`
+`Status.PENDING`
+`Status.RUNNING`
+`Status.FAILED`
+`Status.SUCCESS`
+`Status.CANCELED`
+`Status.SKIPPED`
+`Status.ERROR`
 
 ## Stage
 
-`StageStatus.CREATED`
-`StageStatus.PENDING`
-`StageStatus.RUNNING`
-`StageStatus.FAILED`
-`StageStatus.SUCCESS`
-`StageStatus.CANCELED`
-`StageStatus.SKIPPED`
-`StageStatus.ERROR`
+`Status.CREATED`
+`Status.PENDING`
+`Status.RUNNING`
+`Status.FAILED`
+`Status.SUCCESS`
+`Status.CANCELED`
+`Status.SKIPPED`
+`Status.ERROR`
 
-`JobStatus.RUNNING in statuses` → `StageStatus.RUNNING`
-`JobStatus.PENDING in statuses` → `StageStatus.PENDING`
-`JobStatus.CREATED in statuses` → `StageStatus.CREATED`
-`JobStatus.ERROR in statuses` → `StageStatus.ERROR`
-`JobStatus.FAILED in statuses` → `StageStatus.FAILED`
-`JobStatus.CANCELED in statuses` → `StageStatus.CANCELED`
-`JobStatus.SKIPPED in statuses` → `StageStatus.SKIPPED`
+`Status.RUNNING in statuses` → `Status.RUNNING`
+`Status.PENDING in statuses` → `Status.PENDING`
+`Status.CREATED in statuses` → `Status.CREATED`
+`Status.ERROR in statuses` → `Status.ERROR`
+`Status.FAILED in statuses` → `Status.FAILED`
+`Status.CANCELED in statuses` → `Status.CANCELED`
+`Status.SKIPPED in statuses` → `Status.SKIPPED`

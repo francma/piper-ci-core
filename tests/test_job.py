@@ -1,85 +1,62 @@
 import json
-import tempfile
-
-import pytest
-
-from piper_driver.models import *
-from piper_driver.app import app
-from piper_driver.addins.exceptions import *
-from piper_driver.addins.common import Common
 from http import HTTPStatus
 
-app.testing = True
+import pytest
+from pathlib import Path
+
+from piper_core.model import *
+from piper_core.utils.exceptions import *
+from piper_core.container import Container
 
 
-def test_job_evaluate_condition(connection):
+def test_job_evaluate_condition(container: Container):
+    assert container
     project = Project.create(url='https://A', origin='https://github.com/francma/piper-ci-test-repo.git')
     build = Build.create(project=project, branch='master', commit='634721d9da222050d41dce164d9de35fe475aa7a')
     stage = Stage.create(name='first', order=1, build=build)
 
-    when = 'BOOL_VAR'
-    job = Job.create(stage=stage, image='IMAGE', when=when)
+    only = 'BOOL_VAR'
+    job = Job.create(stage=stage, image='IMAGE', only=only)
     Environment.create(name='BOOL_VAR', value=True, job=job)
-    assert job.evaluate_when() is True
+    assert job.evaluate_only() is True
 
-    when = 'STR_VAR == "string"'
-    job = Job.create(stage=stage, image='IMAGE', when=when)
+    only = 'STR_VAR == "string"'
+    job = Job.create(stage=stage, image='IMAGE', only=only)
     Environment.create(name='STR_VAR', value='string', job=job)
-    assert job.evaluate_when() is True
+    assert job.evaluate_only() is True
 
-    when = 'INT_VAR % 2 == 0'
-    job = Job.create(stage=stage, image='IMAGE', when=when)
+    only = 'INT_VAR % 2 == 0'
+    job = Job.create(stage=stage, image='IMAGE', only=only)
     Environment.create(name='INT_VAR', value=22, job=job)
-    assert job.evaluate_when() is True
+    assert job.evaluate_only() is True
 
-    when = 'INT_VAR %%%%% 2 == 0'
-    job = Job.create(stage=stage, image='IMAGE', when=when)
+    only = 'INT_VAR %%%%% 2 == 0'
+    job = Job.create(stage=stage, image='IMAGE', only=only)
     Environment.create(name='INT_VAR', value=22, job=job)
     with pytest.raises(JobExpressionException):
-        job.evaluate_when()
+        job.evaluate_only()
 
 
-def test_model(connection):
-    project = Project.create(url='https://A', origin='https://github.com/francma/piper-ci-test-repo.git')
-    build = Build.create(project=project, branch='a', commit='634721d9da222050d41dce164d9de35fe475aa7a')
-    stage = Stage.create(name='first', order=1, build=build)
-
-    job = Job()
-    job.stage = stage
-    job.image = 1
-    job.when = 1
-    job.status = 1
-    with pytest.raises(ModelInvalid) as e:
-        job.save()
-    expected = set(['status', 'image', 'when'])
-    assert set(e.value.errors) == expected
-    errors = list()
-    job.validate(errors)
-    assert set(errors) == expected
-
-    job.image = 'image'
-    job.when = '1 == 1'
-    job.status = JobStatus.CREATED
-    assert job.validate()
-    job.save()
-
-
-def test_queue(connection, redis):
+def test_queue(container: Container):
+    assert container
     project1 = Project.create(url='https://1', origin='https://github.com/francma/piper-ci-test-repo.git')
-    runner1 = Runner.create(group='1')
-    runner2 = Runner.create(group='2')
+    runner1 = Runner.create(group='1', token='ABC')
+    runner2 = Runner.create(group='2', token='DEF')
 
     build = Build.create(project=project1, branch='a', commit='634721d9da222050d41dce164d9de35fe475aa7a')
     stage = Stage.create(name='first', order=1, build=build)
     job = Job.create(stage=stage, image='IMAGE', group='2')
-    JobQueue.push(job)
 
-    assert JobQueue.pop(runner1) is None
-    assert JobQueue.pop(runner2) == job
-    assert JobQueue.pop(runner2) is None
+    queue = container.get_job_queue()
+    queue.push(job)
+
+    assert queue.pop(runner1) is None
+    assert queue.pop(runner2) == job
+    assert queue.pop(runner2) is None
 
 
-def test_job_runner_export(connection):
+def test_job_runner_export(container: Container):
+    assert container
     project = Project.create(url='https://A', origin='https://github.com/francma/piper-ci-test-repo.git')
     build = Build.create(project=project, branch='a', commit='634721d9da222050d41dce164d9de35fe475aa7a')
     stage = Stage.create(name='first', order=1, build=build)
@@ -96,6 +73,7 @@ def test_job_runner_export(connection):
 
     with open('tests/runner_exports/export_1.json') as fp:
         expected = json.load(fp)
+        expected['secret'] = job.secret
     assert job.export() == expected
 
     job = Job.create(stage=stage, image='IMAGE')
@@ -106,59 +84,110 @@ def test_job_runner_export(connection):
 
     with open('tests/runner_exports/export_2.json') as fp:
         expected = json.load(fp)
+        expected['secret'] = job.secret
     assert job.export() == expected
 
 
-def test_log_write(connection):
+def test_log_write(container: Container):
     project = Project.create(url='https://A', origin='https://github.com/francma/piper-ci-test-repo.git')
     build = Build.create(project=project, branch='a', commit='634721d9da222050d41dce164d9de35fe475aa7a')
     stage = Stage.create(name='first', order=1, build=build)
-    job = Job.create(stage=stage, image='IMAGE', status=JobStatus.RUNNING)
+    job = Job.create(stage=stage, image='IMAGE', status=Status.RUNNING)
+    command1 = Command.create(job=job, order=0, cmd='echo Hello!')
+    command2 = Command.create(job=job, order=1, cmd='echo Hello!')
 
-    with tempfile.TemporaryDirectory() as tempdir:
-        Common.JOB_LOG_DIR = tempdir
-        client = app.test_client()
-        r = client.post('/jobs/report/' + str(job.secret) + '?status=' + RequestJobStatus.RUNNING.value, data='12')
-        assert r.status_code == 200
-        r = client.post('/jobs/report/' + str(job.secret) + '?status=' + RequestJobStatus.RUNNING.value, data='34')
-        assert r.status_code == 200
-        r = client.post('/jobs/report/' + str(job.secret) + '?status=' + RequestJobStatus.COMPLETED.value, data='5')
-        assert r.status_code == 200
+    command1_start = '::piper:command:0:start:1512383889::\n'
+    command1_content = 'Hello!'
+    command1_end = '\n::piper:command:0:end:1512383890:0::\n'
 
-        with open(job.log_path) as fp:
-            assert fp.read() == '12345'
+    command2_start = '::piper:command:1:start:1512383891::\n'
+    command2_content = 'Hello!'
+    command2_end = '\n::piper:command:1:end:1512383892:0::\n'
 
-        job = Job.get(Job.id == job.id)
-        assert job.status is JobStatus.SUCCESS
+    messages = [
+        command1_start + command1_content + command1_end,
+        command2_start,
+        command2_content,
+        command2_end,
+    ]
+
+    app = container.get_app()
+    app.testing = True
+    client = app.test_client()
+    r = client.post('/jobs/report/' + str(job.secret) + '?status=' + RequestStatus.RUNNING.value, data=messages[0])
+    assert r.status_code == 200
+    command1 = Command.get(Command.id == command1.id)
+    assert command1.log_start == len(command1_start)
+    assert command1.log_end == len(command1_start) + len(command1_content)
+    assert command1.start.timestamp() == 1512383889
+    assert command1.end.timestamp() == 1512383890
+    assert command1.return_code == 0
+
+    r = client.post('/jobs/report/' + str(job.secret) + '?status=' + RequestStatus.RUNNING.value, data=messages[1])
+    assert r.status_code == 200
+    command2 = Command.get(Command.id == command2.id)
+    assert command2.log_start == len(messages[0]) + len(command2_start)
+    assert command2.log_end is None
+    assert command2.start.timestamp() == 1512383891
+    assert command2.end is None
+    assert command2.return_code is None
+
+    r = client.post('/jobs/report/' + str(job.secret) + '?status=' + RequestStatus.RUNNING.value, data=messages[2])
+    assert r.status_code == 200
+    command2 = Command.get(Command.id == command2.id)
+    assert command2.log_start == len(messages[0]) + len(command2_start)
+    assert command2.log_end is None
+    assert command2.start.timestamp() == 1512383891
+    assert command2.end is None
+    assert command2.return_code is None
+
+    r = client.post('/jobs/report/' + str(job.secret) + '?status=' + RequestStatus.COMPLETED.value, data=messages[3])
+    assert r.status_code == 200
+    command2 = Command.get(Command.id == command2.id)
+    assert command2.log_start == len(messages[0]) + len(command2_start)
+    assert command2.log_end == len(messages[0]) + len(command2_start) + len(command2_content)
+    assert command2.start.timestamp() == 1512383891
+    assert command2.end.timestamp() == 1512383892
+    assert command2.return_code == 0
+
+    job_log_dir = Path(container.config['app']['job_log_dir'])
+    with open(job_log_dir / (str(job.id) + job.secret)) as fp:
+        assert fp.read() == ''.join(messages)
+
+    job = Job.get(Job.id == job.id)
+    assert job.status is Status.SUCCESS
 
 
-def test_log_read(connection):
-    user1 = User.create(role=UserRole.MASTER, email='2@email.com')
+def test_log_read(container: Container):
+    user1 = User.create(role=UserRole.MASTER, email='2@email.com', public_key='AAA')
     project = Project.create(url='https://A', origin='https://github.com/francma/piper-ci-test-repo.git')
     build = Build.create(project=project, branch='a', commit='634721d9da222050d41dce164d9de35fe475aa7a')
     stage = Stage.create(name='first', order=1, build=build)
-    job = Job.create(stage=stage, image='IMAGE', status=JobStatus.RUNNING)
-    with tempfile.TemporaryDirectory() as tempdir:
-        Common.JOB_LOG_DIR = tempdir
-        client = app.test_client()
+    job = Job.create(stage=stage, image='IMAGE', status=Status.RUNNING)
 
-        job.append_log(b'123')
-        r = client.get('/jobs/' + str(job.id) + '/log', headers={
-            'Authorization': 'Bearer ' + str(user1.token),
-        })
+    app = container.get_app()
+    facade = container.get_jobs_facade()
+    app.testing = True
+
+    facade.append_log(job, b'123')
+    assert facade.read_log(user1, job.id) == b'123'
+    with app.test_client() as client:
+        r = client.get('/jobs/' + str(job.id) + '/log')
         assert r.status_code == HTTPStatus.OK
         assert r.data == b'123'
 
-        job.append_log(b'456')
+    facade.append_log(job, b'456')
+    assert facade.read_log(user1, job.id, 3, 2) == b'45'
+    with app.test_client() as client:
         r = client.get('/jobs/' + str(job.id) + '/log', headers={
-            'Authorization': 'Bearer ' + str(user1.token),
             'Range': 'bytes 3-5',
         })
+
         assert r.status_code == HTTPStatus.PARTIAL_CONTENT
         assert r.data == b'45'
 
 
-def test_status(connection):
+def test_status(container: Container):
     project = Project.create(url='https://A', origin='https://github.com/francma/piper-ci-test-repo.git')
     build = Build.create(project=project, branch='a', commit='634721d9da222050d41dce164d9de35fe475aa7a')
     stage1 = Stage.create(name='first', order=1, build=build)
@@ -174,29 +203,21 @@ def test_status(connection):
     Job.create(stage=stage3, image='IMAGE')
     Job.create(stage=stage3, image='IMAGE')
 
-    stage1.status = StageStatus.READY
+    stage1.status = Status.READY
     stage1.save()
 
-    stage1.status = StageStatus.RUNNING
+    stage1.status = Status.RUNNING
     stage1.save()
-    assert Stage.get(Stage.id == stage2).status is StageStatus.PENDING
-    assert Stage.get(Stage.id == stage3).status is StageStatus.PENDING
+    assert Stage.get(Stage.id == stage2).status is Status.PENDING
+    assert Stage.get(Stage.id == stage3).status is Status.PENDING
     for job in Job.select().where(Job.stage == stage2 | Job.stage == stage3):
-        assert job.status is JobStatus.PENDING
+        assert job.status is Status.PENDING
 
-    with connection.atomic():
+    with container.get_db().atomic():
         for job in Job.select().where(Job.stage == stage1):
-            job.status = JobStatus.SUCCESS
+            job.status = Status.SUCCESS
             job.save()
 
-    assert Stage.get(Stage.id == stage2).status is StageStatus.READY
+    assert Stage.get(Stage.id == stage2).status is Status.READY
     for job in Job.select().where(Job.stage == stage2):
-        assert job.status is JobStatus.READY
-
-
-
-
-
-
-
-
+        assert job.status is Status.READY

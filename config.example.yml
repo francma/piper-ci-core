@@ -1,0 +1,11 @@
+database:
+#  dsn: '[scheme]://[user]:[password]@[host]:[port]/[database]'
+  dsn: 'sqlite:///default.db'
+
+app:
+  secret: 'RANDOM_STRING'
+  authorized_keys_path: '~/.ssh/authorized_keys'
+  job_log_dir: '/tmp'
+
+queue:
+  url: redis://@localhost:6379/12
