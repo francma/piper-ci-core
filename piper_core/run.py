@@ -85,6 +85,7 @@ if init:
     exit(0)
 
 if reload_keys:
+    container.init_db()
     authorized_keys_path = Path(config['app']['authorized_keys_path']).expanduser()
     authorized_keys.write(authorized_keys_path, config_path, User.select())
     print('Authorized keys file %s was updated' % authorized_keys_path)
