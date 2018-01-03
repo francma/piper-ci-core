@@ -3,7 +3,15 @@ info:
   title: Piper CI Core API
   version: 0.0.1
 paths:
-  # done
+  /:
+    get:
+      responses:
+        200:
+          description: Return this schema
+          content:
+            application/json:
+              schema:
+                type: object
   /builds:
     get:
       tags: [builds]

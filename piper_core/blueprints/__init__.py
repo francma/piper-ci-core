@@ -6,6 +6,7 @@ from piper_core.blueprints.job import JobBlueprintFactory
 from piper_core.blueprints.webhook import WebhookBlueprintFactory
 from piper_core.blueprints.identity import IdentityBlueprintFactory
 from piper_core.blueprints.user import UserBlueprintFactory
+from piper_core.blueprints.homepage import HomepageBlueprintFactory
 
 __all__ = [
     'BuildBlueprintFactory',
@@ -16,4 +17,5 @@ __all__ = [
     'WebhookBlueprintFactory',
     'IdentityBlueprintFactory',
     'UserBlueprintFactory',
+    'HomepageBlueprintFactory',
 ]

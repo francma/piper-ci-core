@@ -123,6 +123,7 @@ class Container:
             app.register_blueprint(IdentityBlueprintFactory.create(self.get_users_facade()))
             app.register_blueprint(WebhookBlueprintFactory.create(self.get_builds_facade()))
             app.register_blueprint(UserBlueprintFactory.create(self.get_users_facade()))
+            app.register_blueprint(HomepageBlueprintFactory.create(self.get_schema()))
 
             @app.errorhandler(FacadeInvalidSchema)
             @app.errorhandler(FacadeInvalidAction)
