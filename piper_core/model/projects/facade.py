@@ -46,7 +46,7 @@ class ProjectsFacade:
         if len(_filters) > 0:
             query = query.where(functools.reduce(operator.and_, _filters))
 
-        return query.wrapped_count()
+        return query.count()
 
     def list(self, user: User, filters: Dict[str, Any] = None, order: List[str] = None, limit: int = 10,
              offset: int = 0) -> List[Dict[Any, Any]]:

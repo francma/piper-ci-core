@@ -89,7 +89,7 @@ class StagesFacade:
         if len(_filters) > 0:
             query = query.where(functools.reduce(operator.and_, _filters))
 
-        return query.wrapped_count()
+        return query.count()
 
     def cancel(self, user: User, idx: int) -> None:
         from piper_core.model.jobs.job import Job
