@@ -504,7 +504,13 @@ def main() -> None:
     logged_user = User.get(User.id == user_id)
 
     shell = container.get_shell(logged_user)
-    shell.cmdloop()
+    try:
+        shell.cmdloop()
+    except KeyboardInterrupt:
+        exit(2)
+    except Exception:
+        print('Unexpected exception')
+        exit(1)
 
 
 if __name__ == '__main__':

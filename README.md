@@ -14,8 +14,8 @@ Main system component for Piper CI
 
 * SSH server (Piper Shell)
 * Redis (queue)
-* git >= 2.3.0
-* Python >= 3.5
+* git
+* Python >= 3.6
 
 ## Installation
 
