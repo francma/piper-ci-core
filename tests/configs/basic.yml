@@ -7,7 +7,7 @@ jobs:
     stage: one
     runner: RUNNER
     image: IMAGE
-    only: branch == master
+    when: branch == master
     env:
       a: a
       b: 1
@@ -21,7 +21,7 @@ jobs:
     env:
       a: branch
       c: c
-    only: branch == master
+    when: branch == master
     commands:
       - hej
       - hej

@@ -1,5 +1,6 @@
 import re
 from http import HTTPStatus
+import sys
 
 import flask
 from peewee import DoesNotExist
@@ -113,17 +114,45 @@ class JobBlueprintFactory:
             elif runner_status is RequestStatus.COMPLETED:
                 facade.append_log(job, flask.request.data)
 
-                # all command completed?
-                uncompleted = Command.select().where((Command.job == job) & (Command.return_code.is_null())).count()
-                if uncompleted:
+                # is there a failed command?
+                try:
+                    failed = Command.get(
+                        (Command.job == job) &
+                        (Command.return_code != 0) &
+                        (Command.type == CommandType.NORMAL)
+                    ).order
+                except DoesNotExist:
+                    failed = sys.maxsize
+
+                # are all commands before failed one completed?
+                uncompleted = Command.select().where(
+                    (Command.job == job) &
+                    (Command.return_code.is_null()) &
+                    (Command.order < failed) &
+                    (Command.type == CommandType.NORMAL)
+                )
+
+                if uncompleted.count():
                     job.status = Status.ERROR
                     job.save()
 
                     return flask.jsonify({'status': ResponseStatus.ERROR.value})
 
-                # is there failed command?
-                failed = Command.select().where((Command.job == job) & (Command.return_code != 0)).count()
-                job.status = Status.FAILED if failed else Status.SUCCESS
+                # check if all after_failure commands are executed
+                if failed:
+                    uncompleted = Command.select().where(
+                        (Command.job == job) &
+                        (Command.return_code.is_null()) &
+                        (Command.type == CommandType.AFTER_FAILURE)
+                    )
+
+                    if uncompleted.count():
+                        job.status = Status.ERROR
+                        job.save()
+
+                        return flask.jsonify({'status': ResponseStatus.ERROR.value})
+
+                job.status = Status.FAILED if failed != sys.maxsize else Status.SUCCESS
                 job.save()
 
                 # Push Jobs from next stage if current stage == SUCCESS

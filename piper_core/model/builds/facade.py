@@ -145,7 +145,7 @@ class BuildsFacade:
         from piper_core.model.stages.stage import Stage
         from piper_core.model.jobs.job import Job
         from piper_core.model.jobs.environment import Environment
-        from piper_core.model.jobs.command import Command
+        from piper_core.model.jobs.command import Command, CommandType
 
         hook_schema = self.schema['components']['schemas']['piper-yml']
         try:
@@ -172,8 +172,8 @@ class BuildsFacade:
             job.stage = stages[job_def['stage']]
             jobs.append(job)
 
-            if 'only' in job_def:
-                job.only = job_def['only']
+            if 'when' in job_def:
+                job.only = job_def['when']
 
             if 'runner' in job_def:
                 # FIXME check if group exists
@@ -194,7 +194,17 @@ class BuildsFacade:
                 command.order = idx
                 command.cmd = command_cmd
                 command.job = job
+                command.type = CommandType.NORMAL
                 commands.append(command)
+
+            if 'after_failure' in job_def:
+                for idx, command_cmd in enumerate(job_def['after_failure']):
+                    command = Command()
+                    command.order = idx
+                    command.cmd = command_cmd
+                    command.job = job
+                    command.type = CommandType.AFTER_FAILURE
+                    commands.append(command)
 
         with database_proxy.atomic():
             build.save()

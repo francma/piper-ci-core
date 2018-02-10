@@ -27,7 +27,7 @@ setup(
         ]
     },
     install_requires=[
-        'peewee',
+        'peewee>=3',
         'Flask>=0.12',
         'pyyaml',
         'redis',

@@ -1,5 +1,5 @@
 from peewee import PrimaryKeyField, ForeignKeyField, CharField
-from playhouse.fields import PickledField
+from piper_core.model.fields import PickledField
 from typing import Union
 
 from piper_core.model.base_model import BaseModel
