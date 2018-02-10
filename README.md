@@ -1,6 +1,6 @@
 # PIPER CI Core
 
-[![Build Status](https://travis-ci.org/francma/piper-ci-driver.svg?branch=master)](https://travis-ci.org/francma/piper-ci-driver)
+[![Build Status](https://travis-ci.org/francma/piper-ci-core.svg?branch=master)](https://travis-ci.org/francma/piper-ci-core)
 
 Main system component for Piper CI
 
