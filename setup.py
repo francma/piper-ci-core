@@ -33,6 +33,7 @@ setup(
         'redis>=2',
         'simpleeval>=0.9',
         'jsonschema>=2.6',
+        'requests>=2.18',
     ],
     extras_require={
         'dev': [
