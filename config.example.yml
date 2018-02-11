@@ -1,11 +1,19 @@
 database:
-#  dsn: '[scheme]://[user]:[password]@[host]:[port]/[database]'
+  # database '[scheme]://[user]:[password]@[host]:[port]/[database]'
+  # see http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#db-url
   dsn: 'sqlite:///default.db'
 
 app:
+  # flask app secret
+  # see http://flask.pocoo.org/docs/0.12/quickstart/#sessions
   secret: 'RANDOM_STRING'
+  # path to authorized_keys files used for authentication to piper shell
+  # be careful do not rewrite your main authorized_keys file (eg. /root/.ssh/authorized_keys)
   authorized_keys_path: '~/.ssh/authorized_keys'
-  job_log_dir: '/tmp'
+  # path where to save job log output
+  job_log_dir: '~/jobs'
 
 queue:
+  # queue for jobs ready to be executed by Piper CI workers
+  # only supported backend for now is redis://
   url: redis://@localhost:6379/12
