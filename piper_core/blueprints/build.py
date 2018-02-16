@@ -20,6 +20,18 @@ class BuildBlueprintFactory:
                 filters['project_id'] = project_id
             return flask.jsonify(facade.list(user, filters, order, limit, offset))
 
+        @builds_view.route('/builds/count', methods=['GET'])
+        @builds_view.route('/projects/<int:project_id>/builds/count', methods=['GET'])
+        @authorize
+        def builds_view_count(user, project_id=None):
+            filters = flask.request.args.items()
+            if project_id is not None:
+                filters['project_id'] = project_id
+
+            count = facade.count(user, filters)
+
+            return flask.jsonify({'count': count})
+
         @builds_view.route('/builds/<int:build_id>', methods=['GET'])
         @authorize
         def builds_view_get(user, build_id: int):

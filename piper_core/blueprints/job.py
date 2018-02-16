@@ -31,6 +31,24 @@ class JobBlueprintFactory:
                 filters['stage_id'] = stage_id
             return flask.jsonify(facade.list(user, filters, order, limit, offset))
 
+        @blueprint.route('/jobs/count', methods=['GET'])
+        @blueprint.route('/projects/<int:project_id>/jobs/count', methods=['GET'])
+        @blueprint.route('/builds/<int:build_id>/jobs/count', methods=['GET'])
+        @blueprint.route('/stages/<int:stage_id>/jobs/count', methods=['GET'])
+        @authorize
+        def jobs_view_count(user, project_id=None, build_id=None, stage_id=None):
+            filters = flask.request.args.items()
+            if project_id is not None:
+                filters['project_id'] = project_id
+            elif build_id is not None:
+                filters['build_id'] = build_id
+            elif stage_id is not None:
+                filters['stage_id'] = stage_id
+
+            count = facade.count(user, filters)
+
+            return flask.jsonify({'count': count})
+
         @blueprint.route('/jobs/<int:job_id>', methods=['GET'])
         @authorize
         def jobs_view_get(user, job_id: int):

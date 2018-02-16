@@ -22,6 +22,14 @@ class RunnerBlueprintFactory:
         def runners_view_list(filters, order, limit, offset, user):
             return flask.jsonify(facade.list(user, filters, order, limit, offset))
 
+        @blueprint.route('/runners/count', methods=['GET'])
+        @authorize
+        def runners_view_count(user):
+            filters = flask.request.args.items()
+            count = facade.count(user, filters)
+
+            return flask.jsonify({'count': count})
+
         @blueprint.route('/runners', methods=['POST'])
         @authorize
         def runners_view_create(user):
