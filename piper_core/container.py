@@ -5,7 +5,7 @@ import peewee
 import yaml
 from http import HTTPStatus
 from playhouse import db_url
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, Optional
 
 from redis import Redis
 
@@ -21,19 +21,19 @@ class Container:
 
     def __init__(self, config: Dict[Any, Any]) -> None:
         self.config: Dict[Any, Any] = config
-        self._builds_facade: BuildsFacade = None
-        self._projects_facade: ProjectsFacade = None
-        self._runners_facade: RunnersFacade = None
-        self._stages_facade: StagesFacade = None
-        self._users_facade: UsersFacade = None
-        self._jobs_facade: JobsFacade = None
-        self._db: peewee.Database = None
-        self._queue: Queue = None
-        self._job_queue: JobQueue = None
-        self._app: flask.Flask = None
-        self._shell: PiperShell = None
-        self._schema = None
-        self._github: Github = None
+        self._projects_facade: Optional[ProjectsFacade] = None
+        self._builds_facade: Optional[BuildsFacade] = None
+        self._runners_facade: Optional[RunnersFacade] = None
+        self._stages_facade: Optional[StagesFacade] = None
+        self._users_facade: Optional[UsersFacade] = None
+        self._jobs_facade: Optional[JobsFacade] = None
+        self._db: Optional[peewee.Database] = None
+        self._queue: Optional[Queue] = None
+        self._job_queue: Optional[JobQueue] = None
+        self._app: Optional[flask.Flask] = None
+        self._shell: Optional[PiperShell] = None
+        self._schema: Optional[Any] = None
+        self._github: Optional[Github] = None
 
     def destroy(self):
         if self._db is not None:

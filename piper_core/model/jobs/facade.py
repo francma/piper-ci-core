@@ -84,11 +84,11 @@ class JobsFacade:
         _order = list()
         for o in order:
             if o == 'created-desc':
-                _order.append(Job.id.desc())
+                _order.append(Job.id.desc())  # type: ignore
             if o == 'created-asc':
-                _order.append(Job.id.asc())
+                _order.append(Job.id.asc())  # type: ignore
         if len(_order) == 0:
-            _order.append(Job.id.desc())
+            _order.append(Job.id.desc())  # type: ignore
 
         result = list()
         query = Job.select(Job).distinct().join(Stage).join(Build).join(Project)
@@ -211,7 +211,7 @@ class JobsFacade:
     def append_log(self, job: Job, contents: bytes):
         from piper_core.model.jobs.command import Command, CommandType
 
-        def get_command(_order: int, _typeof: str) -> Command:
+        def get_command(_order: int, _typeof: bytes) -> Command:
             if _typeof == b'command':
                 command_type = CommandType.NORMAL
             elif _typeof == b'after_failure':
