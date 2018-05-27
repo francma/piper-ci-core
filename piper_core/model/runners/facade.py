@@ -136,4 +136,4 @@ class RunnersFacade:
         try:
             Draft4Validator(schema=schema).validate(values)
         except ValidationError as e:
-            raise Exception(e.message)
+            raise FacadeInvalidSchema(e.message)
