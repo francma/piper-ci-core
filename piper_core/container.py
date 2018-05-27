@@ -42,7 +42,7 @@ class Container:
 
     def get_schema(self):
         if self._schema is None:
-            cd = Path(__file__).parent.parent / 'openapi.yml'
+            cd = Path(__file__).parent / 'openapi.yml'
             with cd.open('r') as fp:
                 self._schema = yaml.load(fp)
 
