@@ -37,7 +37,7 @@ parser.add_argument(
 parsed = vars(parser.parse_args())
 config_path = parsed['config'].expanduser()
 config = yaml.load(config_path.open())
-cd = Path(__file__).parent.parent / 'openapi.yml'
+cd = Path(__file__).parent / 'openapi.yml'
 with cd.open('r') as fp:
     schemas = yaml.load(fp)
 

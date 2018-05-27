@@ -1,1 +1,1 @@
-include openapi.yml
+include piper_core/openapi.yml

@@ -8,6 +8,7 @@ setup(
     description='Piper CI Core',
     long_description=long_description,
     packages=find_packages(),
+    include_package_data=True,
     package_dir={'piper_core': 'piper_core'},
     author='Martin Franc',
     author_email='francma6@fit.cvut.cz',
